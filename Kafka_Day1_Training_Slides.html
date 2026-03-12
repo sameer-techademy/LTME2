@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Techademy · Kafka Deep Dive · Event Streaming in Practice</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            background: #0b2b4f;
+            color: #1e2b3c;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        :root {
+            --tech-blue: #0b2b4f;
+            --tech-blue-light: #1e3a5f;
+            --tech-green: #1e7e34;
+            --tech-orange: #c9500c;
+            --tech-gold: #e68a2e;
+            --tech-gray-100: #f4f6fa;
+            --tech-gray-200: #e9ecf2;
+            --tech-gray-600: #4a5b6e;
+            --tech-white: #ffffff;
+            --border-light: #d0d8e5;
+            --code-bg: #1e2b3c;
+            --code-text: #e4e9f2;
+        }
+        .global-header {
+            background: linear-gradient(135deg, var(--tech-blue) 0%, #123456 100%);
+            color: white;
+            padding: 0.6rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 20;
+            flex-shrink: 0;
+        }
+        .logo-area { display: flex; align-items: baseline; gap: 0.75rem; }
+        .logo-tagline {
+            font-size: 0.8rem; font-weight: 400; color: #cfdbe9;
+            border-left: 1px solid #90a9c2; padding-left: 1rem;
+        }
+        .nav-controls { display: flex; gap: 1.2rem; align-items: center; }
+        .nav-btn {
+            background: rgba(255,255,255,0.15); border: none; color: white;
+            font-size: 1.5rem; width: 50px; height: 50px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.2s; backdrop-filter: blur(4px);
+        }
+        .nav-btn:hover { background: var(--tech-orange); transform: scale(1.1); }
+        .nav-btn:active { transform: scale(0.95); }
+        #slide-counter {
+            font-size: 1rem; background: rgba(0,0,0,0.3);
+            padding: 0.3rem 1rem; border-radius: 40px; font-weight: 500;
+        }
+        .slides-container {
+            display: flex; overflow-x: auto; overflow-y: hidden;
+            scroll-snap-type: x mandatory;
+            height: calc(100vh - 70px);
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .slides-container::-webkit-scrollbar { display: none; }
+        .slide {
+            flex: 0 0 100vw; scroll-snap-align: start;
+            overflow-y: auto; background: var(--tech-white);
+            padding: 1.5rem 3rem;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+        }
+        h2 {
+            font-size: 1.8rem; border-bottom: 3px solid var(--tech-blue);
+            padding-bottom: 0.5rem; margin: 1.5rem 0 1rem; color: var(--tech-blue);
+        }
+        h3 {
+            font-size: 1.4rem; color: var(--tech-blue-light);
+            margin: 1.5rem 0 1rem; display: flex; align-items: center; gap: 0.5rem;
+        }
+        h3 i { color: var(--tech-orange); }
+        h4 {
+            font-size: 1.2rem; color: var(--tech-gray-600);
+            margin: 1.2rem 0 0.5rem;
+            border-left: 5px solid var(--tech-gold); padding-left: 1rem;
+        }
+        .wwwh-grid {
+            display: grid; grid-template-columns: 90px 1fr;
+            gap: 0.7rem; background: var(--tech-gray-100);
+            border-radius: 16px; padding: 1.5rem; margin: 1.5rem 0;
+        }
+        .wwwh-term {
+            font-weight: 700; color: var(--tech-blue);
+            background: #e2e8f0; padding: 0.2rem 0.8rem;
+            border-radius: 30px; text-align: center;
+            font-size: 0.85rem; height: fit-content;
+        }
+        .incident-box {
+            background: #ffefe3; border-left: 6px solid var(--tech-orange);
+            padding: 1.2rem 2rem; border-radius: 14px; margin: 1.2rem 0;
+            box-shadow: 0 4px 10px rgba(201,80,12,0.1);
+        }
+        .incident-box > strong { color: #a13e0a; font-size: 1.05rem; display: block; margin-bottom: 0.4rem; }
+        .incident-box p strong { color: #a13e0a; display: inline; font-size: inherit; }
+        .principles-box, .mistakes-box {
+            background: #e8f0fe; border-radius: 16px;
+            padding: 1.5rem; margin: 1.5rem 0; border: 1px solid #bdd3f0;
+        }
+        .mistakes-box { background: #fff4e5; border-color: #fac99b; }
+        pre {
+            background: var(--code-bg); color: var(--code-text);
+            padding: 1.2rem; border-radius: 14px; overflow-x: auto;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.82rem; margin: 1.2rem 0;
+            border: 1px solid #2f4052; white-space: pre-wrap; word-break: break-word;
+            line-height: 1.5;
+        }
+        table { width: 100%; border-collapse: collapse; margin: 1.2rem 0; font-size: 0.9rem; }
+        th { background: var(--tech-blue-light); color: white; font-weight: 600; padding: 0.7rem 1rem; }
+        td, th { border: 1px solid var(--border-light); padding: 0.65rem 1rem; vertical-align: top; }
+        tr:nth-child(even) { background: var(--tech-gray-100); }
+        .badge {
+            display: inline-block; background: var(--tech-green); color: white;
+            font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.8rem;
+            border-radius: 30px; text-transform: uppercase; margin-right: 0.5rem;
+        }
+        .badge.orange { background: var(--tech-orange); }
+        .ascii-diagram {
+            background: #1d2b3a; color: #bbd9f5; font-family: monospace;
+            white-space: pre; padding: 1rem; border-radius: 12px;
+            font-size: 0.8rem; overflow-x: auto; margin: 1.5rem 0;
+        }
+        .footer-note {
+            background: var(--tech-gray-100); padding: 2rem;
+            border-radius: 20px; margin-top: 2rem; text-align: center;
+            color: var(--tech-gray-600); border: 1px solid var(--border-light);
+        }
+        ul, ol { padding-left: 1.8rem; margin: 0.8rem 0; }
+        li { margin: 0.3rem 0; }
+        hr { border: none; border-top: 2px dashed var(--tech-gray-200); margin: 1.8rem 0; }
+        .cover {
+            background: linear-gradient(145deg, #f0f4fa 0%, #ffffff 100%);
+            display: flex; flex-direction: column;
+            justify-content: flex-start; align-items: center;
+            text-align: center; padding-top: 3rem; padding-bottom: 3rem;
+        }
+        .cover h1 { font-size: 3.5rem; color: var(--tech-blue); margin-bottom: 1rem; }
+        .cover h2 { border-bottom: none; font-weight: 400; color: var(--tech-gray-600); }
+        .info-box {
+            background: #e8f0fe; border-left: 6px solid #4a90d9;
+            border-radius: 14px; padding: 1.2rem 1.8rem; margin: 1.2rem 0;
+        }
+        .info-box h4 { border-left: none; padding-left: 0; color: #1e4d8c; }
+        .best-practices-box {
+            background: #eaf7ee; border-left: 6px solid var(--tech-green);
+            border-radius: 14px; padding: 1.2rem 1.8rem; margin: 1.5rem 0;
+            border-top: 1px solid #b3dfc0; border-right: 1px solid #b3dfc0;
+            border-bottom: 1px solid #b3dfc0;
+        }
+        .best-practices-box h4 { border-left: none; padding-left: 0; color: var(--tech-green); }
+        .critical-box {
+            background: #fff3e0; border-left: 6px solid #f57c00;
+            border-radius: 14px; padding: 1.2rem 1.8rem; margin: 1.5rem 0;
+        }
+        .mermaid {
+            background: #f7f9fc; border: 1px solid var(--border-light);
+            border-radius: 12px; padding: 1.2rem 1.5rem;
+            margin: 1.5rem 0; overflow-x: auto; text-align: center;
+        }
+        .mermaid svg { max-width: 100%; height: auto; }
+        code {
+            background: #eef0f5; color: var(--tech-blue);
+            padding: 0.1rem 0.4rem; border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.85em;
+        }
+        pre code { background: transparent; color: inherit; padding: 0; }
+        p { margin: 0.6rem 0; line-height: 1.65; }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            mermaid.initialize({
+                startOnLoad: true,
+                theme: 'default',
+                securityLevel: 'loose',
+                flowchart: { curve: 'basis' },
+                sequence: { actorMargin: 50 }
+            });
+        });
+    </script>
+</head>
+<body>
+    <header class="global-header">
+        <div class="logo-area">
+            <img src="https://raw.githubusercontent.com/sameer-techademy/default/refs/heads/main/Techademy-logo.png" alt="Techademy" style="height:38px; width:auto; display:block; filter: brightness(0) invert(1);">
+            <span class="logo-tagline">Exponential Engineer (E2) Program</span>
+        </div>
+        <div class="nav-controls">
+            <button class="nav-btn" id="homeBtn" title="Home"><i class="fas fa-home"></i></button>
+            <button class="nav-btn" id="prevBtn" title="Previous"><i class="fas fa-chevron-left"></i></button>
+            <span id="slide-counter">1 / 22</span>
+            <button class="nav-btn" id="nextBtn" title="Next"><i class="fas fa-chevron-right"></i></button>
+        </div>
+    </header>
+
+    <div class="slides-container" id="slidesContainer">
+
+        <!-- SLIDE 0: COVER -->
+        <section class="slide cover" data-index="0">
+            <h1>Apache Kafka</h1>
+            <h2>Deep Dive · Event Streaming in Practice</h2>
+            <div style="margin:2rem 0;">
+                <span class="badge">22 SLIDES</span>
+                <span class="badge orange">PRODUCTION CODE</span>
+                <span class="badge">PAYMENTS CONTEXT</span>
+                <span class="badge">JAVA 17 / SPRING BOOT</span>
+            </div>
+            <div style="font-size:1.1rem;color:var(--tech-blue);margin-top:1rem;">
+                <i class="fas fa-stream"></i>&nbsp; Event Streaming Fundamentals &nbsp;·&nbsp; Applied in a Payments Context
+            </div>
+            <div style="margin:1.5rem 0;color:var(--tech-gray-600);font-size:0.95rem;">
+                <strong>Stack:</strong> Java 17 · Spring Boot · Apache Kafka &nbsp;·&nbsp;
+                <strong>Duration:</strong> 1 Day / 4 Hours
+            </div>
+            <div class="principles-box" style="max-width:720px;text-align:left;">
+                <h4>This module covers:</h4>
+                <ul>
+                    <li><strong>What / Why / When / Where / How</strong> — concise technical framework</li>
+                    <li><strong>Kafka Architecture</strong> — brokers, partitions, replication, ISR, KRaft</li>
+                    <li><strong>Worked Scenario</strong> — real-world event streaming pipeline design, using payments as context</li>
+                    <li><strong>Failure Modes &amp; Root Cause Analysis</strong> — data loss, duplicates, lag, poison pills</li>
+                    <li><strong>Correct Approach &amp; Key Principles</strong> — CAP, idempotency, EOS, ordering</li>
+                    <li><strong>Production-Grade Code</strong> — idempotent producers, consumers, DLT, transactions</li>
+                    <li><strong>Execution Flow</strong> — sequence diagram end-to-end</li>
+                    <li><strong>Anti-Patterns · Decision Matrix · Conclusion</strong></li>
+                </ul>
+            </div>
+            <div style="margin-top:2rem;font-style:italic;color:var(--tech-gray-600);">Use arrow keys or navigation buttons to advance · Each slide is individually scrollable</div>
+        </section>
+
+        <!-- SLIDE 1: WHAT - MESSAGING vs STREAMING + ECOSYSTEM TERMINOLOGY -->
+        <section class="slide" data-index="1">
+            <h2><i class="fas fa-book-open" style="color:var(--tech-orange)"></i> SLIDE 01 — What: Concise Technical Definitions</h2>
+            <h3><i class="fas fa-exchange-alt"></i> Messaging vs. Streaming</h3>
+            <div class="wwwh-grid">
+                <div class="wwwh-term">Messaging</div>
+                <div>A communication pattern where discrete messages are passed from producers to consumers via a broker. Focus is on reliable <strong>point-to-point or pub-sub delivery</strong>. Examples: RabbitMQ, ActiveMQ.</div>
+                <div class="wwwh-term">Streaming</div>
+                <div>Treats data as an <strong>unbounded, continuous sequence of events</strong>. Enables processing in real-time with concepts like event time, windowing, and stateful operations. Apache Kafka is a <strong>distributed event streaming platform</strong>, combining a high-performance broker with stream processing capabilities.</div>
+            </div>
+            <h3><i class="fas fa-sitemap"></i> Kafka Ecosystem — Core Terminology</h3>
+            <table>
+                <tr><th>Term</th><th>Definition</th></tr>
+                <tr><td><strong>Broker</strong></td><td>A Kafka server that stores data and serves clients. A cluster consists of multiple brokers.</td></tr>
+                <tr><td><strong>Topic</strong></td><td>A logical channel to which producers write and consumers read. Topics are partitioned.</td></tr>
+                <tr><td><strong>Partition</strong></td><td>An ordered, immutable sequence of records. Each partition is replicated across brokers for fault tolerance.</td></tr>
+                <tr><td><strong>Replication</strong></td><td>Copies of partitions (replicas) stored on multiple brokers. One replica is the <strong>leader</strong>; others are <strong>followers (ISR)</strong>.</td></tr>
+                <tr><td><strong>ISR (In-Sync Replicas)</strong></td><td>Set of replicas fully caught up with the leader. Only ISR members can become new leaders on failure.</td></tr>
+                <tr><td><strong>Leader Election</strong></td><td>Process of selecting a new partition leader when the current leader fails. Controlled by the <strong>Controller</strong> broker.</td></tr>
+                <tr><td><strong>Producer</strong></td><td>A client that publishes records to a topic. Configurable with <code>acks</code>, <code>retries</code>, and idempotence settings.</td></tr>
+                <tr><td><strong>Consumer / Group</strong></td><td>Clients that subscribe to topics. Consumers in the same <strong>consumer group</strong> jointly share partitions — each partition assigned to exactly one consumer in the group.</td></tr>
+                <tr><td><strong>Offset</strong></td><td>A sequential ID assigned to each record within a partition. Consumers track their position via offsets.</td></tr>
+                <tr><td><strong>Delivery Semantics</strong></td><td>At-most-once, at-least-once, exactly-once. Determined by producer acks, idempotence, and consumer offset commits.</td></tr>
+                <tr><td><strong>ACKs</strong></td><td><code>acks=0</code> (no wait), <code>acks=1</code> (leader write), <code>acks=all</code> (all ISR replicas acknowledge).</td></tr>
+                <tr><td><strong>Replication Factor</strong></td><td>Number of copies of each partition across the cluster.</td></tr>
+                <tr><td><strong>Idempotent Producer</strong></td><td>Ensures no duplicates due to retries, using a producer ID and sequence numbers.</td></tr>
+                <tr><td><strong>Key-Based Partitioning</strong></td><td>Producer specifies a key; the same key always routes to the same partition, preserving order per key.</td></tr>
+                <tr><td><strong>Ordering Guarantees</strong></td><td>Within a partition, records are strictly ordered. Across partitions, there is no global order.</td></tr>
+            </table>
+        </section>
+
+        <!-- SLIDE 2: WHAT CONTINUED - PAYMENT USE CASES -->
+        <section class="slide" data-index="2">
+            <h2><i class="fas fa-credit-card" style="color:var(--tech-orange)"></i> SLIDE 02 — What: Kafka Applied — Payments as a Domain Example</h2>
+            <h3><i class="fas fa-landmark"></i> Applying Kafka: Payments as a Domain Example</h3>
+            <div class="info-box">
+                <p>Transaction authorization, settlement, fraud detection, and reconciliation. Events such as <code>PaymentAuthorized</code>, <code>PaymentCaptured</code>, and <code>RefundInitiated</code> are published to Kafka topics for real-time downstream processing by services including the fraud engine, ledger service, and notification service.</p>
+            </div>
+            <h3><i class="fas fa-question-circle"></i> Why Does Kafka Exist — Problem Statement</h3>
+            <p>Traditional monolithic systems and point-to-point integrations suffer from the following:</p>
+            <ul>
+                <li><strong>Tight coupling</strong> — services directly call each other, leading to fragile dependencies.</li>
+                <li><strong>Scalability bottlenecks</strong> — databases become choke points for high-throughput event processing.</li>
+                <li><strong>Data loss risk</strong> — without durable storage, failures cause unrecoverable data loss.</li>
+                <li><strong>Out-of-order processing</strong> — distributed systems often struggle to maintain event order.</li>
+                <li><strong>Lack of replayability</strong> — once processed, events cannot be replayed for debugging or new consumers.</li>
+                <li><strong>Streaming vs. batch</strong> — hard to support both real-time and batch processing from the same pipeline.</li>
+            </ul>
+            <div class="best-practices-box">
+                <h4>Kafka Solves These By Providing:</h4>
+                <ul>
+                    <li><strong>Decoupling</strong> via a publish-subscribe model</li>
+                    <li><strong>High throughput</strong> with horizontal scaling</li>
+                    <li><strong>Durability</strong> through replication and disk persistence</li>
+                    <li><strong>Ordering</strong> within partitions</li>
+                    <li><strong>Replayability</strong> via offset management and retention policies</li>
+                    <li><strong>Unified platform</strong> for real-time streams and batch integration</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- SLIDE 3: WHEN TO USE IT -->
+        <section class="slide" data-index="3">
+            <h2><i class="fas fa-calendar-check" style="color:var(--tech-orange)"></i> SLIDE 03 — When to Use Kafka</h2>
+            <h3><i class="fas fa-check-double"></i> Specific Triggers and Conditions</h3>
+            <table>
+                <tr>
+                    <th style="background:#1e7e34;">Use Kafka When</th>
+                    <th style="background:#a13e0a;">Avoid Kafka When</th>
+                </tr>
+                <tr>
+                    <td>High-volume event ingestion (e.g., millions of payment events per second)</td>
+                    <td>Simple point-to-point messaging with &lt;5ms latency and occasional loss is tolerable</td>
+                </tr>
+                <tr>
+                    <td>Multiple independent consumers of the same data stream</td>
+                    <td>Very low throughput (&lt;100 messages/sec) and minimal operational overhead is required</td>
+                </tr>
+                <tr>
+                    <td>Event sourcing and audit logging with full replay capability</td>
+                    <td>Strict transactional consistency across multiple topics without accepting EOS complexity</td>
+                </tr>
+                <tr>
+                    <td>Stream processing (aggregations, joins, windowing) in real-time</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>Decoupling microservices in an event-driven architecture</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>Geographically distributed data pipelines (via Kafka MirrorMaker)</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>Exactly-once semantics (EOS) for financial transactions</td>
+                    <td></td>
+                </tr>
+            </table>
+            <div class="info-box">
+                <h4>Applying This Decision in Practice</h4>
+                <p>For a payment platform handling millions of daily transactions — authorization, clearing, settlement, fraud detection — Kafka is the correct choice. It provides the throughput, durability, ordering per <code>paymentId</code>, and exactly-once semantics required by financial regulations.</p>
+            </div>
+        </section>
+
+        <!-- SLIDE 4: WHERE TO USE IT + ARCHITECTURE DIAGRAM -->
+        <section class="slide" data-index="4">
+            <h2><i class="fas fa-map" style="color:var(--tech-orange)"></i> SLIDE 04 — Where to Use It: Architectural Layers</h2>
+            <h3><i class="fas fa-layer-group"></i> Kafka in the Architecture Stack</h3>
+            <p>Kafka typically sits in the <strong>data streaming layer</strong> of an architecture:</p>
+            <div class="wwwh-grid">
+                <div class="wwwh-term">Edge</div>
+                <div>Producers (mobile apps, web servers) publish events to Kafka via REST proxies or direct clients.</div>
+                <div class="wwwh-term">Streaming</div>
+                <div>Kafka brokers store and replicate events. Stream processors (Kafka Streams, ksqlDB) consume and transform data in real time.</div>
+                <div class="wwwh-term">Service</div>
+                <div>Microservices consume events to update their own state — e.g., payment service, fraud detection service, ledger service.</div>
+                <div class="wwwh-term">Database</div>
+                <div>Kafka Connect sinks events to persistent data stores such as PostgreSQL and Elasticsearch.</div>
+                <div class="wwwh-term">Analytics</div>
+                <div>Batch jobs (Apache Spark, Apache Flink) read from Kafka for offline processing and data lake ingestion.</div>
+            </div>
+            <h3><i class="fas fa-project-diagram"></i> High-Level Architecture — Payments Domain Example</h3>
+            <div class="mermaid">
+flowchart LR
+    subgraph Edge["Edge Layer"]
+        Mobile[Mobile App]
+        Web[Web Server]
+        API[REST Proxy]
+    end
+
+    subgraph Streaming["Kafka Streaming Layer"]
+        direction TB
+        KCluster[(Kafka Cluster<br/>3 Brokers · RF=3)]
+        KS[Stream Processor<br/>Kafka Streams / ksqlDB]
+    end
+
+    subgraph Services["Service Layer"]
+        Fraud[Fraud Detection]
+        Ledger[Ledger Service]
+        Notify[Notification Service]
+    end
+
+    subgraph Storage["Data Layer"]
+        PG[(PostgreSQL)]
+        ES[(Elasticsearch)]
+        DL[(Data Lake)]
+    end
+
+    Mobile & Web -->|publish events| API
+    API -->|produce| KCluster
+    KCluster -->|consume| KS
+    KS -->|transformed events| KCluster
+    KCluster -->|payment-events| Fraud & Ledger & Notify
+    KCluster -->|connect sinks| PG & ES & DL
+    PG & ES -->|batch export| DL
+
+    classDef layer fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    class Edge,Streaming,Services,Storage layer
+            </div>
+        </section>
+
+        <!-- SLIDE 5: HOW TO IMPLEMENT -->
+        <section class="slide" data-index="5">
+            <h2><i class="fas fa-cogs" style="color:var(--tech-orange)"></i> SLIDE 05 — How to Implement: High-Level Steps</h2>
+            <h3><i class="fas fa-server"></i> 5.1 Setting Up a Kafka Cluster</h3>
+            <ol>
+                <li>Choose number of brokers (odd number, at least 3 for quorum).</li>
+                <li>Configure <code>server.properties</code>: broker ID, listeners, log directories, and replication factor (e.g., 3).</li>
+                <li>Start ZooKeeper or use <strong>KRaft mode</strong> (Kafka Raft) for metadata management — recommended for new clusters.</li>
+                <li>Create topics with desired partitions and replication factor.</li>
+            </ol>
+            <h3><i class="fas fa-upload"></i> 5.2 Producer Implementation</h3>
+            <ol>
+                <li>Add the <code>spring-kafka</code> dependency to <code>pom.xml</code>.</li>
+                <li>Configure <code>ProducerFactory</code> and <code>KafkaTemplate</code>.</li>
+                <li>Define <code>application.yml</code> with bootstrap servers, key/value serializers, <code>acks</code>, retries, and idempotence settings.</li>
+                <li>Inject <code>KafkaTemplate</code> and send messages with business keys. Handle async callbacks for success and failure.</li>
+            </ol>
+            <h3><i class="fas fa-download"></i> 5.3 Consumer Implementation</h3>
+            <ol>
+                <li>Configure <code>ConsumerFactory</code> and <code>KafkaListenerContainerFactory</code>.</li>
+                <li>Define <code>application.yml</code> with consumer group, offset reset policy, and key/value deserializers.</li>
+                <li>Create <code>@KafkaListener</code> methods with topics and error handling.</li>
+                <li>Implement idempotent processing and <strong>manual offset commits</strong> after successful processing.</li>
+            </ol>
+            <h3><i class="fas fa-code-branch"></i> 5.4 Stream Processing (Optional)</h3>
+            <ol>
+                <li>Use Kafka Streams DSL or Spring Cloud Stream.</li>
+                <li>Define topologies with state stores, aggregations, and joins.</li>
+            </ol>
+            <h3><i class="fas fa-lock"></i> 5.5 Exactly-Once Semantics</h3>
+            <ol>
+                <li>Enable idempotent producer: <code>enable.idempotence=true</code>.</li>
+                <li>Set <code>acks=all</code> and <code>max.in.flight.requests.per.connection=5</code> (safe with idempotence enabled).</li>
+                <li>Use transactions: <code>initTransactions()</code>, <code>beginTransaction()</code>, <code>sendOffsetsToTransaction()</code>, <code>commitTransaction()</code>.</li>
+                <li>Configure consumer: <code>isolation.level=read_committed</code> to read only committed messages.</li>
+            </ol>
+        </section>
+
+        <!-- SLIDE 6: KAFKA ARCHITECTURE PART 1 - BROKER INTERNALS -->
+        <section class="slide" data-index="6">
+            <h2><i class="fas fa-server" style="color:var(--tech-orange)"></i> SLIDE 06 — Kafka Architecture: Broker &amp; Topic Internals</h2>
+            <h3><i class="fas fa-microchip"></i> 6.1 Broker Internals</h3>
+            <p>A Kafka broker is a JVM process that manages:</p>
+            <ul>
+                <li><strong>Log segments</strong> — each partition is divided into segment files on disk. Segments are append-only and indexed for fast lookups.</li>
+                <li><strong>Replication manager</strong> — handles leader/follower coordination, fetches from leaders, and manages the ISR set.</li>
+                <li><strong>Controller</strong> — one broker acts as the controller, managing partition leader elections, topic creation, and cluster metadata. In KRaft mode, this role is merged with the metadata quorum.</li>
+                <li><strong>Network layer</strong> — handles producer/consumer requests using NIO, with configurable thread pools.</li>
+                <li><strong>Metadata cache</strong> — stores topic-partition assignments, broker liveness, and cluster state.</li>
+            </ul>
+            <h3><i class="fas fa-layer-group"></i> 6.2 Topic-Partition Structure</h3>
+            <ul>
+                <li>A <strong>topic</strong> is a logical category. Physically, it is split into <strong>partitions</strong> — the unit of parallelism.</li>
+                <li>Each partition is an <strong>ordered, immutable log</strong>. Messages are assigned a sequential offset starting at 0.</li>
+                <li>Partitions are distributed across brokers for load balancing and fault tolerance.</li>
+            </ul>
+            <h3><i class="fas fa-copy"></i> 6.3 Replication and ISR</h3>
+            <ul>
+                <li>Each partition has a <strong>replication factor (RF)</strong>. Replicas are stored on different brokers.</li>
+                <li><strong>Leader</strong> — handles all reads and writes for the partition.</li>
+                <li><strong>Followers</strong> — pull messages from the leader. Considered <strong>in-sync</strong> if they have caught up within <code>replica.lag.time.max.ms</code>.</li>
+                <li><strong>ISR</strong> — set of fully caught-up replicas. Only ISR members can be elected as leader on failure.</li>
+                <li>If all replicas are out of sync, <code>unclean.leader.election.enable</code> controls whether a non-ISR replica can become leader (risks data loss — set to <code>false</code> in production).</li>
+            </ul>
+            <h3><i class="fas fa-vote-yea"></i> 6.4 Leader Election</h3>
+            <ul>
+                <li>Triggered by broker failure, controlled removal, or partition reassignment.</li>
+                <li>The controller monitors ZooKeeper/KRaft for broker heartbeats.</li>
+                <li>When a leader disappears, the controller selects a new leader from the ISR, ensuring the new leader has the most up-to-date data.</li>
+            </ul>
+            <h3><i class="fas fa-upload"></i> 6.5 Producers</h3>
+            <ul>
+                <li>Producers choose which partition to write to (round-robin if no key, or hash of key for ordered delivery).</li>
+                <li>Records are batched to improve throughput before being sent to the broker.</li>
+                <li>Acknowledgment levels (<code>acks</code>) determine the durability guarantee per message.</li>
+                <li>Idempotent producers assign a producer ID and sequence numbers to detect and reject duplicates at the broker.</li>
+            </ul>
+        </section>
+
+        <!-- SLIDE 7: KAFKA ARCHITECTURE PART 2 - CONSUMERS + DIAGRAM -->
+        <section class="slide" data-index="7">
+            <h2><i class="fas fa-project-diagram" style="color:var(--tech-orange)"></i> SLIDE 07 — Kafka Architecture: Consumers, KRaft &amp; Cluster Diagram</h2>
+            <h3><i class="fas fa-download"></i> 6.6 Consumers and Consumer Groups</h3>
+            <ul>
+                <li>Consumers read from partitions; each consumer in a group is assigned a subset of partitions (exactly one consumer per partition within a group).</li>
+                <li>Offsets are committed to Kafka's internal topic <code>__consumer_offsets</code>.</li>
+                <li>Group coordination: one consumer acts as group leader, handling partition assignment when members join or leave (triggering a rebalance).</li>
+            </ul>
+            <h3><i class="fas fa-database"></i> 6.7 ZooKeeper vs. KRaft</h3>
+            <div class="info-box">
+                <ul>
+                    <li><strong>Legacy Kafka</strong> uses ZooKeeper for cluster metadata: broker registry, topic configurations, and controller election.</li>
+                    <li><strong>KRaft (Kafka Raft)</strong> replaces ZooKeeper with an internal Raft quorum, simplifying operations and improving startup time.</li>
+                    <li>In production, <strong>KRaft is recommended</strong> for all new clusters (available since Kafka 2.8, production-ready since Kafka 3.3).</li>
+                </ul>
+            </div>
+            <h3><i class="fas fa-draw-polygon"></i> 6.8 Full Cluster Architecture — Replication and ISR</h3>
+            <div class="mermaid">
+graph TB
+    subgraph Clients["Producers and Consumers"]
+        P1[Payment Service<br/>key=paymentId]
+        P2[Fraud Service]
+        C1[Consumer Group: ledger-group]
+        C2[Consumer Group: fraud-group]
+    end
+
+    subgraph Kafka["Kafka Cluster: 3 Brokers"]
+        direction TB
+        subgraph Topic["Topic: payment-events — Partitions=3, RF=3"]
+            P0[Partition 0<br/>Leader: Broker 1]
+            P1P[Partition 1<br/>Leader: Broker 2]
+            P2P[Partition 2<br/>Leader: Broker 3]
+        end
+        subgraph Broker1["Broker 1"]
+            B1[Broker Process]
+            L0[Log Segment: P0]
+            F1a[Follower: P1]
+            F2a[Follower: P2]
+        end
+        subgraph Broker2["Broker 2"]
+            B2[Broker Process]
+            L1[Log Segment: P1]
+            F0b[Follower: P0]
+            F2b[Follower: P2]
+        end
+        subgraph Broker3["Broker 3"]
+            B3[Broker Process]
+            L2[Log Segment: P2]
+            F0c[Follower: P0]
+            F1c[Follower: P1]
+        end
+        P0 -->|writes| L0
+        P1P -->|writes| L1
+        P2P -->|writes| L2
+        L0 -.->|replicate| F0b
+        L0 -.->|replicate| F0c
+        L1 -.->|replicate| F1a
+        L1 -.->|replicate| F1c
+        L2 -.->|replicate| F2a
+        L2 -.->|replicate| F2b
+    end
+    subgraph Control["Control Plane"]
+        Controller[Controller Broker<br/>Leader Election]
+        Meta[(Metadata Quorum<br/>KRaft or ZooKeeper)]
+    end
+    P1 -->|hash key to P0| P0
+    P2 -->|hash key to P1| P1P
+    P0 -->|fetch records| C1
+    P1P -->|fetch records| C1
+    P2P -->|fetch records| C2
+    Controller -->|elect leader| B1
+    Controller -->|elect leader| B2
+    Controller -->|elect leader| B3
+    Meta <-->|heartbeats| B1
+    Meta <-->|heartbeats| B2
+    Meta <-->|heartbeats| B3
+    Meta -->|cluster state| Controller
+            </div>
+        </section>
+
+        <!-- SLIDE 8: SCENARIO + GOALS -->
+        <section class="slide" data-index="8">
+            <h2><i class="fas fa-credit-card" style="color:var(--tech-orange)"></i> SLIDE 08 — Worked Scenario: Kafka Applied to a Payment System</h2>
+            <h3><i class="fas fa-play-circle"></i> Worked Scenario — A Payment Platform</h3>
+            <div class="incident-box">
+                <strong>Payment Platform — Real-World Context</strong>
+                <p>A payment platform handles <strong>millions of transactions daily</strong>. Each transaction goes through stages: authorization, clearing, and settlement. Fraud detection must happen in real-time with sub-100ms latency.</p>
+            </div>
+            <h3><i class="fas fa-route"></i> Event Flow</h3>
+            <ol>
+                <li>User initiates payment → Payment service produces <code>PaymentAuthorized</code> event to the <code>payment-events</code> topic.</li>
+                <li>Fraud service consumes events, runs rules, and if suspicious, produces <code>FraudAlert</code> to the <code>fraud-alerts</code> topic.</li>
+                <li>Ledger service consumes both <code>PaymentAuthorized</code> and <code>FraudAlert</code> to update balances accordingly.</li>
+                <li>Reconciliation service consumes all events and stores them in a data lake for batch reporting.</li>
+            </ol>
+            <h3><i class="fas fa-table"></i> Kafka Topics</h3>
+            <table>
+                <tr><th>Topic</th><th>Partitions</th><th>Replication Factor</th><th>Producers</th><th>Consumers</th></tr>
+                <tr><td><code>payment-events</code></td><td>12</td><td>3</td><td>Payment Service</td><td>Fraud Service, Ledger Service, Reconciliation</td></tr>
+                <tr><td><code>fraud-alerts</code></td><td>6</td><td>3</td><td>Fraud Service</td><td>Ledger Service, Notification Service</td></tr>
+                <tr><td><code>settlement-events</code></td><td>12</td><td>3</td><td>Settlement Service</td><td>Reconciliation Service</td></tr>
+            </table>
+            <h3><i class="fas fa-bullseye"></i> Goal: Desired Outcomes</h3>
+            <table>
+                <tr><th>Requirement</th><th>Target</th></tr>
+                <tr><td><strong>Throughput</strong></td><td>Sustain 100,000 events/sec per cluster</td></tr>
+                <tr><td><strong>Latency</strong></td><td>End-to-end (produce to consume) &lt;100ms at p99</td></tr>
+                <tr><td><strong>Durability</strong></td><td>Zero data loss under broker failure (<code>acks=all</code>, <code>min.insync.replicas=2</code>)</td></tr>
+                <tr><td><strong>Exactly-Once</strong></td><td>No duplicates and no gaps for payment events</td></tr>
+                <tr><td><strong>Ordering</strong></td><td>All events for a given <code>paymentId</code> processed in order — use paymentId as message key</td></tr>
+                <tr><td><strong>Scalability</strong></td><td>Add partitions and brokers without downtime</td></tr>
+                <tr><td><strong>Operational</strong></td><td>Auto-rebalance of consumer groups within 10 seconds</td></tr>
+            </table>
+        </section>
+
+        <!-- SLIDE 9: FAILURE MODES PART 1 -->
+        <section class="slide" data-index="9">
+            <h2><i class="fas fa-bug" style="color:var(--tech-orange)"></i> SLIDE 09 — Failure Modes: Data Loss, Duplicates &amp; Out-of-Order</h2>
+            <h3><i class="fas fa-exclamation-circle"></i> 9.1 Data Loss</h3>
+            <div class="incident-box">
+                <strong>Scenario</strong>
+                <p>Producer sends a message with <code>acks=0</code>. Broker crashes before writing to disk. Message is permanently lost — no retry, no recovery.</p>
+            </div>
+            <pre>// INCORRECT: Producer with acks=0 — fire and forget, no durability
+@Bean
+public ProducerFactory&lt;String, PaymentEvent&gt; producerFactory() {
+    Map&lt;String, Object&gt; props = new HashMap&lt;&gt;();
+    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+    props.put(ProducerConfig.ACKS_CONFIG, "0"); // &lt;-- no acknowledgement, no guarantees
+    return new DefaultKafkaProducerFactory&lt;&gt;(props);
+}</pre>
+            <div class="mistakes-box"><strong>Effect:</strong> If broker crashes after accepting but before replicating, the message is lost permanently. In payments, this equals untracked transactions — a regulatory violation.</div>
+
+            <h3><i class="fas fa-clone"></i> 9.2 Duplicate Messages</h3>
+            <div class="incident-box">
+                <strong>Scenario</strong>
+                <p>Producer retries after a timeout, but the first attempt actually succeeded (network hiccup). A duplicate message is sent and processed twice by the consumer.</p>
+            </div>
+            <pre>// INCORRECT: Idempotence disabled with high retry count
+props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, false);
+props.put(ProducerConfig.RETRIES_CONFIG, 10);</pre>
+            <div class="mistakes-box"><strong>Effect:</strong> Duplicate events lead to double-counting in payment systems (e.g., debiting a customer twice).</div>
+
+            <h3><i class="fas fa-random"></i> 9.3 Out-of-Order Messages</h3>
+            <div class="incident-box">
+                <strong>Scenario</strong>
+                <p>Two messages with the same key sent to the same partition. First message is delayed due to retry; the second arrives and is processed first.</p>
+            </div>
+            <pre>// INCORRECT: Multiple in-flight requests with retries and no idempotence
+props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 5);
+props.put(ProducerConfig.RETRIES_CONFIG, 10);
+props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, false);</pre>
+            <div class="mistakes-box"><strong>Effect:</strong> Messages for the same <code>paymentId</code> processed out of order — causing incorrect state, e.g., settlement before authorization.</div>
+        </section>
+
+        <!-- SLIDE 10: FAILURE MODES PART 2 -->
+        <section class="slide" data-index="10">
+            <h2><i class="fas fa-exclamation-triangle" style="color:var(--tech-orange)"></i> SLIDE 10 — Failure Modes: Offset Commits, Availability &amp; Poison Pills</h2>
+            <h3><i class="fas fa-sync-alt"></i> 9.4 Consumer Offset Commit Issues</h3>
+            <div class="incident-box">
+                <strong>Scenario</strong>
+                <p>Consumer processes a message but crashes before committing the offset. After rebalance, another consumer re-processes the same message (at-least-once). If processing is not idempotent, duplicates occur.</p>
+            </div>
+            <pre>// INCORRECT: Auto-commit fires after poll(), not after processing completes
+@KafkaListener(topics = "payment-events", groupId = "payment-group")
+public void listen(PaymentEvent event) {
+    // Process event — auto-commit may fire before this completes
+    // If crash occurs between poll and processing: message re-consumed
+    // If auto-commit fires before processing: message lost on crash
+}</pre>
+            <div class="mistakes-box"><strong>Effect:</strong> Auto-commit fires after <code>poll()</code>, not after processing. Crash between poll and processing completion causes either message loss or duplicate processing depending on timing.</div>
+
+            <h3><i class="fas fa-crown"></i> 9.5 Leader Election and Availability</h3>
+            <div class="incident-box">
+                <strong>Scenario</strong>
+                <p>Broker hosting the partition leader goes down. During election, the partition is unavailable for writes if <code>min.insync.replicas</code> is not satisfied by the remaining ISR.</p>
+            </div>
+            <div class="mistakes-box"><strong>Root Cause:</strong> <code>min.insync.replicas</code> set too high relative to the replication factor, or all replicas simultaneously fall out of sync due to a network partition.</div>
+
+            <h3><i class="fas fa-tachometer-alt"></i> 9.6 Consumer Lag and Rebalancing</h3>
+            <div class="incident-box">
+                <strong>Scenario</strong>
+                <p>Consumers take too long to process messages, causing growing lag. Rebalancing during long processing windows may cause duplicate processing or stop-the-world pauses across all consumers in the group.</p>
+            </div>
+            <div class="mistakes-box">
+                <strong>Effects:</strong>
+                <ul>
+                    <li>Increased end-to-end latency and potential message expiry</li>
+                    <li>Under-provisioned consumers or slow processing logic</li>
+                    <li>Hot partitions — one partition receives disproportionate traffic due to poor key selection</li>
+                    <li><code>max.poll.interval.ms</code> exceeded → consumer ejected from group → rebalance storm</li>
+                </ul>
+            </div>
+
+            <h3><i class="fas fa-skull-crossbones"></i> 9.7 Poison Pills</h3>
+            <div class="incident-box">
+                <strong>Scenario</strong>
+                <p>A malformed message causes the consumer to throw an exception repeatedly, stalling the entire partition indefinitely.</p>
+            </div>
+            <div class="mistakes-box"><strong>Incorrect Handling:</strong> No error handling or dead-letter topic configured. Consumer enters an infinite retry loop, blocking all subsequent messages on that partition.</div>
+        </section>
+
+        <!-- SLIDE 11: ROOT CAUSE ANALYSIS -->
+        <section class="slide" data-index="11">
+            <h2><i class="fas fa-stethoscope" style="color:var(--tech-orange)"></i> SLIDE 11 — Root Cause Analysis</h2>
+            <h3><i class="fas fa-search"></i> Why It Fails: Detailed Root Causes</h3>
+            <h4>10.1 Data Loss</h4>
+            <p><strong>Cause:</strong> <code>acks=0</code> or <code>acks=1</code> combined with unclean leader election. If the leader fails before replicating to followers, and a non-ISR replica becomes leader, data is permanently lost. <strong>Root:</strong> Trade-off of performance over durability.</p>
+            <h4>10.2 Duplicates</h4>
+            <p><strong>Cause:</strong> Producer retries without idempotence enabled. The broker accepted the first write but the producer did not receive an acknowledgement. The second attempt creates a duplicate. <strong>Root:</strong> Lack of exactly-once semantics on the producer side.</p>
+            <h4>10.3 Out-of-Order Messages</h4>
+            <p><strong>Cause:</strong> Multiple in-flight requests with retries enabled. If the first request fails and is retried, but the second succeeds first, the retried first message arrives out of sequence. <strong>Root:</strong> Violating the <code>max.in.flight=1</code> constraint without enabling idempotence.</p>
+            <h4>10.4 Offset Commit Issues</h4>
+            <p><strong>Cause:</strong> Auto-commit triggers after <code>poll()</code>, not after processing completes. If processing fails after offset commit, the message is lost. If the consumer crashes before auto-commit, the message is re-consumed. <strong>Root:</strong> Misunderstanding of commit timing semantics.</p>
+            <h4>10.5 Unavailability</h4>
+            <p><strong>Cause:</strong> All replicas of a partition are out of sync, or <code>min.insync.replicas</code> exceeds the current ISR count. Writes fail with <code>NotEnoughReplicasException</code>. <strong>Root:</strong> Network partition, broker overload, or misconfiguration.</p>
+            <h4>10.6 Consumer Lag</h4>
+            <p><strong>Cause:</strong> Under-provisioned consumers, slow processing logic, or hot partitions receiving disproportionate traffic due to poor key selection. <strong>Root:</strong> Uneven load distribution or insufficient consumer parallelism.</p>
+            <h4>10.7 Poison Pills</h4>
+            <p><strong>Cause:</strong> Invalid data format, missing required fields, or deserialization errors. Lack of schema validation at the producer side. <strong>Root:</strong> Absence of schema registry or input validation before publishing.</p>
+            <hr>
+            <h3><i class="fas fa-table"></i> Root Cause Summary</h3>
+            <table>
+                <tr><th>Failure</th><th>Root Cause</th><th>Key Configuration Fix</th></tr>
+                <tr><td>Data Loss</td><td><code>acks=0/1</code> + unclean leader election</td><td><code>acks=all</code>, <code>min.insync.replicas=2</code></td></tr>
+                <tr><td>Duplicates</td><td>Retries without idempotence</td><td><code>enable.idempotence=true</code></td></tr>
+                <tr><td>Out-of-Order</td><td>Multiple in-flight with retries</td><td><code>max.in.flight=5</code> with idempotence</td></tr>
+                <tr><td>Offset Commit</td><td>Auto-commit timing mismatch</td><td>Manual <code>ack.acknowledge()</code></td></tr>
+                <tr><td>Unavailability</td><td>ISR count below <code>min.insync.replicas</code></td><td>RF=3, <code>min.insync.replicas=2</code></td></tr>
+                <tr><td>Consumer Lag</td><td>Slow processing, hot partitions</td><td>Tune <code>max.poll.records</code>, add consumers</td></tr>
+                <tr><td>Poison Pills</td><td>Invalid data, no error handler</td><td>DLT + <code>CommonErrorHandler</code></td></tr>
+            </table>
+        </section>
+
+        <!-- SLIDE 12: CORRECT APPROACH + KEY PRINCIPLES -->
+        <section class="slide" data-index="12">
+            <h2><i class="fas fa-check-circle" style="color:var(--tech-orange)"></i> SLIDE 12 — Correct Approach &amp; Key Principles</h2>
+            <h3><i class="fas fa-shield-alt"></i> Patterns to Mitigate Failure</h3>
+            <div class="best-practices-box">
+                <h4>Production-Grade Configuration Checklist</h4>
+                <ul>
+                    <li>Use <code>acks=all</code> and <code>enable.idempotence=true</code> on all producers</li>
+                    <li>Set <code>min.insync.replicas=2</code> for strong durability guarantees</li>
+                    <li>Use <strong>manual offset commits</strong> after successful processing only</li>
+                    <li>Implement <strong>idempotent consumers</strong> — store processed IDs in a DB with a unique constraint</li>
+                    <li>Use <strong>dead-letter topics (DLT)</strong> for unprocessable messages (poison pills)</li>
+                    <li>Monitor consumer group lag and set up alerts on JMX / Prometheus metrics</li>
+                    <li>Choose partitioning keys that ensure order AND even distribution (e.g., <code>paymentId</code>)</li>
+                    <li>Plan for partition count increases — design consumers to handle rebalancing gracefully</li>
+                </ul>
+            </div>
+            <h3><i class="fas fa-gavel"></i> Key Principles</h3>
+            <h4>CAP Theorem</h4>
+            <p>Kafka is an <strong>AP system</strong> (Availability + Partition Tolerance) but can be tuned for consistency with <code>acks=all</code> and <code>min.insync.replicas</code>. In practice, it provides strong consistency within the ISR.</p>
+            <h4>Idempotency — Producer and Consumer</h4>
+            <p><strong>Producer idempotence</strong> ensures no duplicates from retries (producer ID + sequence numbers assigned by broker). <strong>Consumer idempotence</strong> ensures safe reprocessing by checking a processed-ID table before executing business logic.</p>
+            <h4>Ordering Guarantee</h4>
+            <p>Within a partition, order is preserved if the producer sends in sequence and the partitioner respects the key. <strong>Global order requires a single partition</strong> — this sacrifices parallelism and should be avoided in high-volume payment systems.</p>
+            <h4>Exactly-Once Semantics (EOS)</h4>
+            <p>Achieved via <strong>idempotent producer</strong> + <strong>Kafka transactions</strong> + consumer <code>isolation.level=read_committed</code>. Ensures each message is processed exactly once end-to-end. Critical for payment ledger updates.</p>
+            <h4>Log Compaction</h4>
+            <p>Kafka can retain only the <strong>latest value for each key</strong> (compacted topics). Useful for state snapshots — e.g., storing the latest account balance or configuration values.</p>
+            <div class="info-box">
+                <h4>Choosing Between At-Least-Once + Idempotent Consumer vs. Exactly-Once Transactions</h4>
+                <ul>
+                    <li><strong>At-least-once + idempotent consumer</strong> — simpler, widely used, sufficient for most payment workflows. Small overhead from duplicate checking in the database.</li>
+                    <li><strong>Exactly-once transactions</strong> — required when the DB write and Kafka send must atomically succeed or fail together. Higher complexity and ~2–3× latency overhead.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- SLIDE 13: PRODUCTION CODE - SETUP + CONFIG -->
+        <section class="slide" data-index="13">
+            <h2><i class="fas fa-code" style="color:var(--tech-orange)"></i> SLIDE 13 — Production Code: Dependencies &amp; Configuration</h2>
+            <h3><i class="fas fa-box"></i> 13.1 Dependencies (pom.xml)</h3>
+            <pre>&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.kafka&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-kafka&lt;/artifactId&gt;
+&lt;/dependency&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.kafka&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-kafka-test&lt;/artifactId&gt;
+    &lt;scope&gt;test&lt;/scope&gt;
+&lt;/dependency&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;com.fasterxml.jackson.core&lt;/groupId&gt;
+    &lt;artifactId&gt;jackson-databind&lt;/artifactId&gt;
+&lt;/dependency&gt;
+&lt;!-- For Avro (if using schema registry) --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;io.confluent&lt;/groupId&gt;
+    &lt;artifactId&gt;kafka-avro-serializer&lt;/artifactId&gt;
+    &lt;version&gt;7.4.0&lt;/version&gt;
+&lt;/dependency&gt;</pre>
+            <div class="info-box"><code>spring-kafka</code> provides high-level abstractions like <code>KafkaTemplate</code> and <code>@KafkaListener</code>. <code>jackson-databind</code> handles JSON serialization. The Avro dependency is optional but recommended for schema evolution and forward/backward compatibility in large systems.</div>
+            <h3><i class="fas fa-file-code"></i> 13.2 Application Properties (application.yml) with Explanations</h3>
+            <pre>spring:
+  kafka:
+    bootstrap-servers: localhost:9092      # Comma-separated list of broker addresses
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.type.mapping: paymentEvent:com.example.dto.PaymentEvent
+      acks: all                            # Wait for all ISR replicas — prevents data loss
+      retries: 10                          # Retry count on transient errors
+      enable-idempotence: true             # No duplicates from retries
+      max-in-flight-requests-per-connection: 5  # Safe with idempotence enabled
+    consumer:
+      group-id: payment-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.type.mapping: paymentEvent:com.example.dto.PaymentEvent
+      auto-offset-reset: earliest          # If no committed offset, start from beginning
+      enable-auto-commit: false            # Commit manually after processing — critical
+      isolation-level: read_committed      # Read only committed messages (EOS consumers)
+    listener:
+      type: batch                          # Listen in batches
+      ack-mode: manual_immediate           # Acknowledge as soon as manual ack is called
+      concurrency: 3                       # Consumer threads (match partition count)</pre>
+            <div class="best-practices-box">
+                <h4>Why These Settings Matter</h4>
+                <ul>
+                    <li><code>acks=all</code> — message not considered sent until all ISR replicas acknowledge. Prevents data loss if leader crashes immediately after write.</li>
+                    <li><code>enable-idempotence=true</code> with <code>max.in.flight=5</code> — guarantees ordering and deduplication at the broker, even with retries.</li>
+                    <li><code>enable-auto-commit=false</code> — gives precise control over offset commits; prevents message loss and uncontrolled duplicates.</li>
+                    <li><code>isolation.level=read_committed</code> — consumers only see messages from committed transactions; prevents reading dirty/uncommitted data.</li>
+                    <li><code>concurrency=3</code> — creates three Kafka consumer threads; tune to match the number of partitions for maximum parallelism.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- SLIDE 14: PRODUCTION CODE - DTO + PRODUCER -->
+        <section class="slide" data-index="14">
+            <h2><i class="fas fa-paper-plane" style="color:var(--tech-orange)"></i> SLIDE 14 — Production Code: DTO &amp; Producer Service</h2>
+            <h3><i class="fas fa-cube"></i> 13.3 DTO — PaymentEvent.java</h3>
+            <pre>package com.example.dto;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.UUID;
+
+public class PaymentEvent {
+    private UUID paymentId;       // Used as Kafka key — ensures all events for a payment
+    private String userId;        // go to the same partition, preserving order
+    private BigDecimal amount;
+    private String currency;
+    private String status;        // AUTHORIZED, CAPTURED, REFUNDED
+    private Instant timestamp;
+
+    // Constructors, getters, setters, toString ...
+}</pre>
+            <div class="info-box"><code>paymentId</code> is used as the Kafka message key. This ensures all events for the same payment are routed to the same partition, preserving strict chronological order across the entire payment lifecycle.</div>
+            <h3><i class="fas fa-upload"></i> 13.4 Producer Service with Async Callbacks</h3>
+            <pre>package com.example.producer;
+
+import com.example.dto.PaymentEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
+import org.springframework.stereotype.Service;
+
+import java.util.concurrent.CompletableFuture;
+
+@Service
+public class PaymentEventProducer {
+    private static final Logger logger = LoggerFactory.getLogger(PaymentEventProducer.class);
+    private final KafkaTemplate&lt;String, PaymentEvent&gt; kafkaTemplate;
+
+    public PaymentEventProducer(KafkaTemplate&lt;String, PaymentEvent&gt; kafkaTemplate) {
+        this.kafkaTemplate = kafkaTemplate;
+    }
+
+    public void sendPaymentEvent(String key, PaymentEvent event) {
+        CompletableFuture&lt;SendResult&lt;String, PaymentEvent&gt;&gt; future =
+                kafkaTemplate.send("payment-events", key, event);
+
+        future.whenComplete((result, ex) -&gt; {
+            if (ex == null) {
+                logger.info("Sent event: key=[{}], partition=[{}], offset=[{}]",
+                        key,
+                        result.getRecordMetadata().partition(),
+                        result.getRecordMetadata().offset());
+            } else {
+                logger.error("Unable to send event key=[{}]: {}", key, ex.getMessage(), ex);
+                // Options:
+                // 1. Retry manually (if not relying on auto-retries)
+                // 2. Send to dead-letter topic
+                // 3. Throw to trigger upstream transaction rollback
+            }
+        });
+    }
+}</pre>
+            <div class="best-practices-box">
+                <h4>Why Async Callbacks?</h4>
+                <ul>
+                    <li><code>KafkaTemplate.send()</code> returns a <code>CompletableFuture</code> — non-blocking by design.</li>
+                    <li><code>whenComplete</code> logs the success details (partition + offset) or routes failures to appropriate handlers.</li>
+                    <li><strong>Never call <code>.get()</code></strong> (synchronous send) in the critical payment path — it blocks the thread and severely reduces throughput.</li>
+                    <li>The idempotent producer configuration ensures automatic retries do not cause duplicates at the broker level.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- SLIDE 15: PRODUCTION CODE - CONSUMER -->
+        <section class="slide" data-index="15">
+            <h2><i class="fas fa-inbox" style="color:var(--tech-orange)"></i> SLIDE 15 — Production Code: Consumer with Manual Commit &amp; Idempotency</h2>
+            <h3><i class="fas fa-shield-alt"></i> 13.5 Consumer with Idempotent Processing</h3>
+            <pre>package com.example.consumer;
+
+import com.example.dto.PaymentEvent;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.persistence.EntityManager;
+import java.util.UUID;
+
+@Component
+public class PaymentEventConsumer {
+    private static final Logger logger = LoggerFactory.getLogger(PaymentEventConsumer.class);
+    private final EntityManager entityManager;
+
+    public PaymentEventConsumer(EntityManager entityManager) {
+        this.entityManager = entityManager;
+    }
+
+    @KafkaListener(topics = "payment-events", groupId = "payment-group")
+    @Transactional  // DB update + idempotency marker committed atomically
+    public void consume(ConsumerRecord&lt;String, PaymentEvent&gt; record, Acknowledgment ack) {
+        try {
+            PaymentEvent event = record.value();
+            logger.info("Consumed: key={}, partition={}, offset={}",
+                    record.key(), record.partition(), record.offset());
+
+            // IDEMPOTENCY CHECK: Have we already processed this paymentId?
+            if (isProcessed(event.getPaymentId())) {
+                logger.info("Duplicate detected for paymentId={}, skipping", event.getPaymentId());
+                ack.acknowledge();  // Still commit offset — event is handled
+                return;
+            }
+
+            // Business logic (e.g., update ledger balance)
+            processPayment(event);
+
+            // Mark as processed IN THE SAME transaction as the business logic
+            markAsProcessed(event.getPaymentId());
+
+            // Manual offset commit — ONLY after successful processing and DB commit
+            ack.acknowledge();
+
+        } catch (Exception e) {
+            logger.error("Error processing key={}, offset={}. Routing to DLT.",
+                    record.key(), record.offset(), e);
+            // DO NOT ack — let the error handler manage retry or DLT routing
+            throw new RuntimeException(e);
+        }
+    }
+
+    private boolean isProcessed(UUID paymentId) {
+        return entityManager.find(ProcessedPayment.class, paymentId) != null;
+    }
+
+    private void markAsProcessed(UUID paymentId) {
+        entityManager.persist(new ProcessedPayment(paymentId, Instant.now()));
+    }
+
+    private void processPayment(PaymentEvent event) {
+        // Business logic: update account balance, ledger entry, etc.
+    }
+}</pre>
+            <div class="best-practices-box">
+                <h4>Why This Pattern Guarantees Exactly-Once Processing</h4>
+                <ul>
+                    <li><strong>Manual commit</strong> via <code>Acknowledgment.acknowledge()</code> ensures offsets are committed only after processing completes and the idempotency check passes.</li>
+                    <li><strong>Idempotency</strong> is achieved by persisting processed <code>paymentId</code>s in the DB with a unique constraint. Duplicate events (after rebalance or retry) are detected and silently skipped.</li>
+                    <li><code>@Transactional</code> ensures the business logic update AND the processed marker are committed <strong>atomically</strong>. If the DB commit fails, the exception is thrown, the offset is not committed, and the consumer retries.</li>
+                    <li>This pattern delivers <strong>exactly-once processing</strong> = at-least-once delivery + idempotent consumer logic.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- SLIDE 16: PRODUCTION CODE - ERROR HANDLER + TRANSACTIONAL PRODUCER -->
+        <section class="slide" data-index="16">
+            <h2><i class="fas fa-tools" style="color:var(--tech-orange)"></i> SLIDE 16 — Production Code: Error Handler &amp; Transactional Producer</h2>
+            <h3><i class="fas fa-ambulance"></i> 13.6 Error Handler with Dead Letter Topic (DLT)</h3>
+            <pre>package com.example.config;
+
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.kafka.listener.CommonErrorHandler;
+import org.springframework.kafka.listener.MessageListenerContainer;
+import org.springframework.kafka.support.serializer.DeserializationException;
+import org.springframework.kafka.core.KafkaTemplate;
+
+public class KafkaErrorHandler implements CommonErrorHandler {
+    private static final Logger logger = LoggerFactory.getLogger(KafkaErrorHandler.class);
+    private final KafkaTemplate&lt;String, Object&gt; kafkaTemplate;
+
+    public KafkaErrorHandler(KafkaTemplate&lt;String, Object&gt; kafkaTemplate) {
+        this.kafkaTemplate = kafkaTemplate;
+    }
+
+    @Override
+    public boolean handleOne(Exception thrownException, ConsumerRecord&lt;?, ?&gt; record,
+                             org.apache.kafka.clients.consumer.Consumer&lt;?, ?&gt; consumer,
+                             MessageListenerContainer container) {
+        if (thrownException instanceof DeserializationException) {
+            // Deserialization errors are UNRECOVERABLE — route to DLT immediately
+            logger.error("Deserialization error for record: {}", record, thrownException);
+            sendToDLT(record, thrownException);
+            return true;  // Mark handled — prevents infinite retry loop
+        }
+        return false;  // Let retry mechanism handle (e.g., SeekToCurrentErrorHandler + backoff)
+    }
+
+    private void sendToDLT(ConsumerRecord&lt;?, ?&gt; record, Exception e) {
+        DeadLetterEvent dle = new DeadLetterEvent(
+                record.topic(), record.partition(), record.offset(),
+                record.key() != null ? record.key().toString() : null,
+                record.value(), e.getMessage()
+        );
+        kafkaTemplate.send("payment-events-dlt", dle);
+        logger.info("Routed poison pill to DLT: topic={}, partition={}, offset={}",
+                record.topic(), record.partition(), record.offset());
+    }
+}</pre>
+            <div class="info-box">Deserialization errors are unrecoverable. Routing to the DLT prevents the consumer from stalling indefinitely on a malformed message. The DLT is monitored for manual intervention and schema validation fixes. Recoverable errors (e.g., transient DB unavailability) are left for the retry mechanism with exponential backoff.</div>
+
+            <h3><i class="fas fa-lock"></i> 13.7 Transactional Producer — Exactly-Once Across Database and Kafka</h3>
+            <pre>@Service
+public class TransactionalPaymentService {
+    private final KafkaTemplate&lt;String, PaymentEvent&gt; kafkaTemplate;
+
+    public TransactionalPaymentService(KafkaTemplate&lt;String, PaymentEvent&gt; kafkaTemplate) {
+        this.kafkaTemplate = kafkaTemplate;
+    }
+
+    // Producer must be configured with transactional.id (unique per producer instance)
+    @Transactional(transactionManager = "kafkaTransactionManager")
+    public void processAndSend(PaymentEvent event) {
+        // 1. Perform DB update (e.g., debit account balance)
+        // accountRepository.debit(event.getUserId(), event.getAmount());
+
+        // 2. Send Kafka message — committed ONLY if DB update succeeds
+        kafkaTemplate.send("payment-events", event.getPaymentId().toString(), event);
+
+        // If DB update fails → Kafka transaction rolls back → message is NOT committed
+        // Consumers with isolation.level=read_committed will never see uncommitted messages
+    }
+}</pre>
+            <div class="best-practices-box">
+                <h4>When to Use Kafka Transactions</h4>
+                <ul>
+                    <li><code>@Transactional</code> with a <strong>Kafka transaction manager</strong> ensures the Kafka send is part of the same transaction as the DB operation.</li>
+                    <li>Producer must have <code>transactional.id</code> configured (unique per producer instance) to enable EOS.</li>
+                    <li>Consumers with <code>isolation.level=read_committed</code> only see messages after the transaction commits.</li>
+                    <li>This pattern is required when a <strong>DB update and Kafka event must atomically succeed or fail together</strong> — typical in payment ledger updates.</li>
+                    <li><strong>Trade-off:</strong> ~2–3× latency overhead vs. at-least-once. Use only when EOS across DB and Kafka is strictly mandated.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- SLIDE 17: EXECUTION FLOW SEQUENCE DIAGRAM -->
+        <section class="slide" data-index="17">
+            <h2><i class="fas fa-stream" style="color:var(--tech-orange)"></i> SLIDE 17 — Execution Flow: Exactly-Once Processing (Payments Example)</h2>
+            <h3><i class="fas fa-project-diagram"></i> Sequence Diagram — Producer to Broker to Consumer</h3>
+            <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as Payment Service
+    participant Prod as Idempotent Producer
+    participant Leader as Partition Leader
+    participant ISR as ISR Followers
+    participant Consumer as Idempotent Consumer
+    participant DB as Application Database
+    participant Meta as Metadata Quorum
+
+    Note over App,Meta: Event Publication with Exactly-Once Semantics
+
+    App->>Prod: send(paymentId, PaymentAuthorized)
+    Prod->>Prod: Assign PID and sequence number for idempotence
+    Prod->>Leader: produce batch with acks=all
+
+    par Replication to ISR
+        Leader->>Leader: Append to local log segment
+        Leader->>ISR: FetchRequest to replicate
+        ISR-->>Leader: Ack with log end offset
+    end
+
+    Leader-->>Prod: Ack confirmed by all ISR
+    Prod-->>App: Callback success with offset=42
+
+    Note over Consumer,DB: Idempotent Event Processing
+
+    Consumer->>Leader: poll with max.poll.records=100
+    Leader-->>Consumer: Return records offset 40 to 42
+
+    Consumer->>DB: BEGIN TRANSACTION
+    Consumer->>DB: SELECT processed WHERE payment_id = param
+
+    alt Already Processed — Duplicate Detected
+        DB-->>Consumer: Record found
+        Consumer->>Consumer: Skip business logic
+        Consumer->>Leader: Commit offset 42 manually
+        Leader-->>Consumer: Commit acknowledged
+    else New Event — First Time Processing
+        DB-->>Consumer: Record not found
+        Consumer->>DB: UPDATE ledger SET balance = new value
+        Consumer->>DB: INSERT processed payment_id and timestamp
+        Consumer->>DB: COMMIT transaction
+        Consumer->>Leader: Commit offset 42 after processing
+        Leader-->>Consumer: Commit acknowledged
+    end
+
+    Note over Meta,Leader: Leader Failure and Recovery
+
+    alt Leader Crash Detected
+        Meta->>ISR: Elect new leader with highest log offset
+        ISR-->>Meta: Acknowledge election result
+        Meta-->>Consumer: Update metadata with new leader
+        Consumer->>Leader: Resume poll — no data loss
+    end
+            </div>
+            <div class="info-box">
+                <h4>Step-by-Step Walkthrough</h4>
+                <ol>
+                    <li><strong>Producer assigns</strong> a producer ID and sequence number to each message batch — broker detects and rejects any duplicates from retries.</li>
+                    <li><strong>Broker leader</strong> appends to its local log, replicates to ISR followers, and acknowledges only after all ISR confirm.</li>
+                    <li><strong>Consumer polls</strong> a batch of records and begins a database transaction for atomic processing.</li>
+                    <li><strong>Idempotency check</strong> queries the DB for the processed marker; duplicate events are silently committed without re-executing business logic.</li>
+                    <li><strong>Manual offset commit</strong> happens only after the DB transaction commits successfully — guaranteeing exactly-once end-to-end.</li>
+                    <li><strong>On leader failure</strong> — the metadata quorum elects a new leader from the ISR; the consumer transparently resumes polling with no data loss.</li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- SLIDE 18: ANTI-PATTERNS PART 1 -->
+        <section class="slide" data-index="18">
+            <h2><i class="fas fa-exclamation-triangle" style="color:var(--tech-orange)"></i> SLIDE 18 — Anti-Patterns in Production Engineering (Part 1)</h2>
+            <h3><i class="fas fa-times-circle"></i> Common Mistakes — 15.1 to 15.6</h3>
+
+            <h4>15.1 Using Default Producer Settings</h4>
+            <div class="incident-box">
+                <strong>Mistake:</strong> Not explicitly setting <code>acks=all</code> or <code>enable.idempotence=true</code>, leading to data loss and duplicates in production.
+                <br><br><strong>Fix:</strong> Always configure production-grade settings explicitly. Never rely on defaults for financial systems.
+            </div>
+
+            <h4>15.2 Relying on Auto-Commit</h4>
+            <div class="incident-box">
+                <strong>Mistake:</strong> <code>enable-auto-commit=true</code> with <code>ack-mode=RECORD</code>. Messages may be committed before processing completes — a crash results in silent message loss.
+                <br><br><strong>Fix:</strong> Disable auto-commit. Use <code>Acknowledgment.acknowledge()</code> manually after successful processing.
+            </div>
+
+            <h4>15.3 Ignoring Consumer Rebalance</h4>
+            <div class="incident-box">
+                <strong>Mistake:</strong> No rebalance listener configured. Pending uncommitted offsets are lost during rebalance, causing duplicate processing on restart.
+                <br><br><strong>Fix:</strong> Implement <code>ConsumerAwareRebalanceListener</code> and commit pending offsets in <code>onPartitionsRevoked()</code>.
+            </div>
+
+            <h4>15.4 Not Handling Poison Pills</h4>
+            <div class="incident-box">
+                <strong>Mistake:</strong> Allowing a deserialization exception to halt the consumer indefinitely. All subsequent messages on that partition are blocked.
+                <br><br><strong>Fix:</strong> Configure <code>CommonErrorHandler</code> with dead-letter topic routing for unrecoverable deserialization errors.
+            </div>
+
+            <h4>15.5 Assuming Partition Count Is Static</h4>
+            <div class="incident-box">
+                <strong>Mistake:</strong> Hardcoding partition count without planning for scaling. Adding partitions later breaks key-based ordering for newly produced messages.
+                <br><br><strong>Fix:</strong> Design for dynamic partition additions. Ensure consumers handle rebalancing gracefully via rebalance listeners.
+            </div>
+
+            <h4>15.6 Overusing Transactions</h4>
+            <div class="incident-box">
+                <strong>Mistake:</strong> Wrapping every Kafka send in a transaction, causing a 2–3× latency penalty unnecessarily.
+                <br><br><strong>Fix:</strong> Use transactions only when exactly-once semantics across multiple topics or a database update is strictly required.
+            </div>
+        </section>
+
+        <!-- SLIDE 19: ANTI-PATTERNS PART 2 + QUICK REFERENCE -->
+        <section class="slide" data-index="19">
+            <h2><i class="fas fa-exclamation-triangle" style="color:var(--tech-orange)"></i> SLIDE 19 — Anti-Patterns in Production Engineering (Part 2)</h2>
+
+            <h4>15.7 Improper Key Selection</h4>
+            <div class="incident-box">
+                <strong>Mistake 1:</strong> Using a key with extremely high cardinality causes many partitions to be underutilised or data to be skewed toward a few hot partitions.
+                <br><strong>Mistake 2:</strong> Using no key results in round-robin assignment, which loses all ordering guarantees for related events.
+                <br><br><strong>Fix:</strong> Choose a business key that both preserves event order and distributes load evenly. For payments: <code>paymentId</code> or <code>accountId</code>.
+            </div>
+
+            <h4>15.8 Not Monitoring Consumer Lag</h4>
+            <div class="incident-box">
+                <strong>Mistake:</strong> Assuming consumers keep up with producers without instrumentation. Silent lag buildup causes SLA breaches and eventual message expiry.
+                <br><br><strong>Fix:</strong> Set up consumer lag metrics and alerts. Use <code>kafka-consumer-groups.sh --describe</code> or Prometheus/Grafana with Kafka JMX metrics.
+            </div>
+
+            <h4>15.9 Misconfiguring <code>max.poll.records</code> and <code>max.poll.interval.ms</code></h4>
+            <div class="incident-box">
+                <strong>Mistake:</strong> Setting <code>max.poll.records</code> too high. If processing a large batch exceeds <code>max.poll.interval.ms</code>, the broker considers the consumer dead and triggers a rebalance storm.
+                <br><br><strong>Fix:</strong> Tune based on expected processing time per record. Rule of thumb: <code>max.poll.records × avg_processing_time_ms &lt;&lt; max.poll.interval.ms</code>.
+            </div>
+
+            <h4>15.10 Using Synchronous Send in the Critical Path</h4>
+            <div class="incident-box">
+                <strong>Mistake:</strong> Calling <code>kafkaTemplate.send().get()</code> — blocks the thread until the broker responds. Throughput drops from thousands per second to tens per second.
+                <br><br><strong>Fix:</strong> Use async send with <code>whenComplete</code> callbacks or <code>CompletableFuture</code> composition. Synchronous send is only appropriate in batch jobs where latency is not a concern.
+            </div>
+
+            <h3><i class="fas fa-table"></i> Anti-Pattern Quick Reference</h3>
+            <table>
+                <tr><th>Anti-Pattern</th><th>Risk</th><th>Fix</th></tr>
+                <tr><td>Default producer settings</td><td>Data loss, duplicates</td><td><code>acks=all</code>, <code>idempotence=true</code></td></tr>
+                <tr><td>Auto-commit enabled</td><td>Message loss or duplicates</td><td>Manual <code>ack.acknowledge()</code></td></tr>
+                <tr><td>No rebalance listener</td><td>Duplicate processing on restart</td><td><code>ConsumerAwareRebalanceListener</code></td></tr>
+                <tr><td>No DLT for poison pills</td><td>Partition stall</td><td><code>CommonErrorHandler</code> + DLT</td></tr>
+                <tr><td>Static partition assumption</td><td>Scaling failures</td><td>Design for rebalancing</td></tr>
+                <tr><td>Overusing transactions</td><td>3× latency overhead</td><td>Use only when EOS is required</td></tr>
+                <tr><td>Poor key selection</td><td>Hot partitions, no ordering</td><td>Use business key (<code>paymentId</code>)</td></tr>
+                <tr><td>No lag monitoring</td><td>Silent SLA breaches</td><td>Prometheus + alerting dashboards</td></tr>
+                <tr><td>High <code>max.poll.records</code></td><td>Rebalance storm</td><td>Tune against <code>max.poll.interval.ms</code></td></tr>
+                <tr><td>Synchronous send in critical path</td><td>Throughput collapse</td><td>Async callbacks / <code>CompletableFuture</code></td></tr>
+            </table>
+        </section>
+
+        <!-- SLIDE 20: DECISION MATRIX -->
+        <section class="slide" data-index="20">
+            <h2><i class="fas fa-balance-scale" style="color:var(--tech-orange)"></i> SLIDE 20 — Decision Matrix: Kafka vs. Alternatives</h2>
+            <h3><i class="fas fa-table"></i> Comparative Analysis: Apache Kafka vs. RabbitMQ vs. AWS Kinesis vs. Apache Pulsar</h3>
+            <table>
+                <tr>
+                    <th>Requirement</th>
+                    <th>Apache Kafka</th>
+                    <th>RabbitMQ</th>
+                    <th>AWS Kinesis</th>
+                    <th>Apache Pulsar</th>
+                </tr>
+                <tr>
+                    <td><strong>Throughput</strong></td>
+                    <td>Very high (millions/sec)</td>
+                    <td>High (hundreds of thousands/sec)</td>
+                    <td>High (thousands/sec per shard)</td>
+                    <td>Very high</td>
+                </tr>
+                <tr>
+                    <td><strong>Latency</strong></td>
+                    <td>~10ms (tunable)</td>
+                    <td>~1ms (very low)</td>
+                    <td>~100ms</td>
+                    <td>~10ms</td>
+                </tr>
+                <tr>
+                    <td><strong>Durability</strong></td>
+                    <td>Replication, configurable acks</td>
+                    <td>Durable queues, persistence options</td>
+                    <td>24h retention, replay within window</td>
+                    <td>Segment storage, replication</td>
+                </tr>
+                <tr>
+                    <td><strong>Ordering</strong></td>
+                    <td>Per partition (strong)</td>
+                    <td>Per queue</td>
+                    <td>Per shard</td>
+                    <td>Per partition</td>
+                </tr>
+                <tr>
+                    <td><strong>Exactly-Once</strong></td>
+                    <td>Yes — idempotence + transactions</td>
+                    <td>No — at-least-once only</td>
+                    <td>Yes — with producer IDs</td>
+                    <td>Yes</td>
+                </tr>
+                <tr>
+                    <td><strong>Stream Processing</strong></td>
+                    <td>Kafka Streams, ksqlDB</td>
+                    <td>Limited (plugins only)</td>
+                    <td>Kinesis Data Analytics</td>
+                    <td>Pulsar Functions</td>
+                </tr>
+                <tr>
+                    <td><strong>Multi-tenancy</strong></td>
+                    <td>Topics with ACLs</td>
+                    <td>Virtual hosts</td>
+                    <td>Streams (per account)</td>
+                    <td>Namespaces (native)</td>
+                </tr>
+                <tr>
+                    <td><strong>Operations</strong></td>
+                    <td>Requires ZooKeeper or KRaft</td>
+                    <td>Simple, low operational burden</td>
+                    <td>Fully managed (AWS)</td>
+                    <td>BookKeeper + ZooKeeper</td>
+                </tr>
+                <tr>
+                    <td><strong>Replay / Event Sourcing</strong></td>
+                    <td>Full replay via offsets</td>
+                    <td>Not supported — messages deleted after ack</td>
+                    <td>Within retention window</td>
+                    <td>Full replay</td>
+                </tr>
+                <tr>
+                    <td><strong>Best Use Case</strong></td>
+                    <td>Event streaming, payment pipelines, log aggregation</td>
+                    <td>Task queues, RPC, work distribution</td>
+                    <td>Real-time analytics on AWS</td>
+                    <td>Multi-cloud, geo-replication</td>
+                </tr>
+            </table>
+            <div class="info-box">
+                <h4>Platform Recommendation — Applied to a Payments Context</h4>
+                <ul>
+                    <li><strong>Apache Kafka</strong> is the default choice for payment event streaming: high throughput, exactly-once semantics, full replay capability, and mature Java/Spring ecosystem.</li>
+                    <li>Consider <strong>AWS Kinesis</strong> only if fully AWS-native and zero operational overhead is a hard requirement.</li>
+                    <li>Use <strong>RabbitMQ</strong> for internal task queues (e.g., notification delivery, retry jobs) where replay is not required.</li>
+                    <li>Consider <strong>Apache Pulsar</strong> for multi-cloud deployments requiring native geo-replication at the broker level.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- SLIDE 21: CONCLUSION -->
+        <section class="slide cover" data-index="21">
+            <h2 style="border-bottom:3px solid var(--tech-blue);">Module Complete — Kafka Deep Dive</h2>
+            <div style="margin:1.5rem 0;">
+                <span class="badge">22 SLIDES</span>
+                <span class="badge orange">PRODUCTION CODE</span>
+                <span class="badge">PAYMENTS CONTEXT</span>
+                <span class="badge">JAVA 17 / SPRING BOOT</span>
+            </div>
+            <div class="principles-box" style="max-width:720px;text-align:left;">
+                <h4>You have covered Kafka fundamentals, applied throughout a payments context:</h4>
+                <ol>
+                    <li>What Kafka is — messaging vs. streaming, ecosystem terminology</li>
+                    <li>Payment event use cases — authorization, settlement, fraud detection</li>
+                    <li>Why it exists — decoupling, durability, replayability, EOS</li>
+                    <li>When to use it — specific triggers and conditions to apply Kafka</li>
+                    <li>Where to use it — architectural layers, edge to analytics</li>
+                    <li>High-level payment event architecture diagram</li>
+                    <li>How to implement — cluster setup, producer, consumer, EOS steps</li>
+                    <li>Broker internals — log segments, replication, ISR, controller</li>
+                    <li>Full cluster architecture diagram with partitions and leader election</li>
+                    <li>Scenario — real payment event pipeline with topics and goals</li>
+                    <li>Failure modes — data loss, duplicates, out-of-order, lag, poison pills</li>
+                    <li>Root cause analysis — configuration pitfalls explained in detail</li>
+                    <li>Correct approach — production-grade configuration checklist</li>
+                    <li>Key principles — CAP, idempotency, ordering, EOS, log compaction</li>
+                    <li>Production code — dependencies, application.yml with explanations</li>
+                    <li>Production code — async producer, idempotent consumer, DLT, transactions</li>
+                    <li>Execution flow — annotated sequence diagram end-to-end</li>
+                    <li>Anti-patterns — 10 common engineering mistakes</li>
+                    <li>Decision matrix — Kafka vs. RabbitMQ vs. Kinesis vs. Pulsar</li>
+                </ol>
+            </div>
+            <div class="best-practices-box" style="max-width:720px;text-align:left;margin-top:1rem;">
+                <h4>Next Steps</h4>
+                <ul>
+                    <li>Hands-on: Set up a local Kafka cluster in KRaft mode</li>
+                    <li>Implement a payment event pipeline with idempotent consumers and DLT</li>
+                    <li>Experiment with partitioning strategies and measure throughput</li>
+                    <li>Explore Kafka Streams for real-time fraud detection pipelines</li>
+                </ul>
+                <h4>References</h4>
+                <ul>
+                    <li><a href="https://kafka.apache.org/documentation/" target="_blank">Apache Kafka Documentation</a></li>
+                    <li><a href="https://spring.io/projects/spring-kafka" target="_blank">Spring for Apache Kafka</a></li>
+                    <li><a href="https://docs.confluent.io/" target="_blank">Confluent Platform Documentation</a></li>
+                </ul>
+            </div>
+            <div class="footer-note" style="margin-top:2rem;max-width:700px;">
+                <i class="fas fa-graduation-cap" style="color:var(--tech-gold);"></i>
+                <strong>Techademy</strong> · Exponential Engineer (E2) Program<br>
+                Real Patterns · Production Scenarios · Applied Domain Context
+            </div>
+            <p style="margin-top:2rem;color:var(--tech-gray-600);">Use arrow keys or navigation buttons to revisit any slide.</p>
+        </section>
+
+    </div><!-- end slides-container -->
+
+    <script>
+        (function() {
+            const container = document.getElementById('slidesContainer');
+            const slides = document.querySelectorAll('.slide');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const homeBtn = document.getElementById('homeBtn');
+            const counter = document.getElementById('slide-counter');
+            let currentIndex = 0;
+            const totalSlides = slides.length;
+
+            function updateCounter() {
+                counter.textContent = (currentIndex + 1) + ' / ' + totalSlides;
+            }
+
+            function scrollToSlide(index) {
+                if (index < 0) index = 0;
+                if (index >= totalSlides) index = totalSlides - 1;
+                const slide = slides[index];
+                if (slide) {
+                    slide.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'start' });
+                    currentIndex = index;
+                    updateCounter();
+                }
+            }
+
+            function onScroll() {
+                const newIndex = Math.round(container.scrollLeft / container.clientWidth);
+                if (newIndex !== currentIndex) {
+                    currentIndex = newIndex;
+                    updateCounter();
+                }
+            }
+
+            prevBtn.addEventListener('click', () => scrollToSlide(currentIndex - 1));
+            nextBtn.addEventListener('click', () => scrollToSlide(currentIndex + 1));
+            homeBtn.addEventListener('click', () => scrollToSlide(0));
+            container.addEventListener('scroll', onScroll, { passive: true });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight') { e.preventDefault(); scrollToSlide(currentIndex + 1); }
+                if (e.key === 'ArrowLeft')  { e.preventDefault(); scrollToSlide(currentIndex - 1); }
+                if (e.key === 'ArrowDown')  { e.preventDefault(); slides[currentIndex].scrollBy({ top: 120, behavior: 'smooth' }); }
+                if (e.key === 'ArrowUp')    { e.preventDefault(); slides[currentIndex].scrollBy({ top: -120, behavior: 'smooth' }); }
+                if (e.key === 'Home') scrollToSlide(0);
+                if (e.key === 'End')  scrollToSlide(totalSlides - 1);
+            });
+
+            updateCounter();
+        })();
+    </script>
+</body>
+</html>

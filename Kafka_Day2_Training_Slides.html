@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Techademy · Kafka Advanced Topics · 1-Day Training</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            background: #0b2b4f;
+            color: #1e2b3c;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        :root {
+            --tech-blue: #0b2b4f;
+            --tech-blue-light: #1e3a5f;
+            --tech-green: #1e7e34;
+            --tech-orange: #c9500c;
+            --tech-gold: #e68a2e;
+            --tech-gray-100: #f4f6fa;
+            --tech-gray-200: #e9ecf2;
+            --tech-gray-600: #4a5b6e;
+            --tech-white: #ffffff;
+            --border-light: #d0d8e5;
+            --code-bg: #1e2b3c;
+            --code-text: #e4e9f2;
+        }
+        .global-header {
+            background: linear-gradient(135deg, var(--tech-blue) 0%, #123456 100%);
+            color: white;
+            padding: 0.6rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 20;
+            flex-shrink: 0;
+        }
+        .logo-area { display: flex; align-items: baseline; gap: 0.75rem; }
+        .logo-tagline {
+            font-size: 0.8rem; font-weight: 400; color: #cfdbe9;
+            border-left: 1px solid #90a9c2; padding-left: 1rem;
+        }
+        .nav-controls { display: flex; gap: 1.2rem; align-items: center; }
+        .nav-btn {
+            background: rgba(255,255,255,0.15); border: none; color: white;
+            font-size: 1.5rem; width: 50px; height: 50px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.2s; backdrop-filter: blur(4px);
+        }
+        .nav-btn:hover { background: var(--tech-orange); transform: scale(1.1); }
+        .nav-btn:active { transform: scale(0.95); }
+        #slide-counter {
+            font-size: 1rem; background: rgba(0,0,0,0.3);
+            padding: 0.3rem 1rem; border-radius: 40px; font-weight: 500;
+        }
+        .slides-container {
+            display: flex; overflow-x: auto; overflow-y: hidden;
+            scroll-snap-type: x mandatory;
+            height: calc(100vh - 70px);
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .slides-container::-webkit-scrollbar { display: none; }
+        .slide {
+            flex: 0 0 100vw; scroll-snap-align: start;
+            overflow-y: auto; background: var(--tech-white);
+            padding: 1.5rem 2.5rem;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+        }
+        h2 {
+            font-size: 1.65rem; border-bottom: 3px solid var(--tech-blue);
+            padding-bottom: 0.5rem; margin: 1rem 0 1rem; color: var(--tech-blue);
+            display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem;
+        }
+        h3 {
+            font-size: 1.25rem; color: var(--tech-blue-light);
+            margin: 1.4rem 0 0.8rem; display: flex; align-items: center;
+            gap: 0.5rem; flex-wrap: wrap;
+        }
+        h3 i { color: var(--tech-orange); }
+        h4 {
+            font-size: 1.2rem; color: var(--tech-gray-600);
+            margin: 1.2rem 0 0.5rem;
+            border-left: 5px solid var(--tech-gold); padding-left: 1rem;
+        }
+        .wwwh-grid {
+            display: grid; grid-template-columns: minmax(min-content, auto) 1fr;
+            gap: 0.7rem; background: var(--tech-gray-100);
+            border-radius: 16px; padding: 1.5rem; margin: 1.5rem 0;
+        }
+        .wwwh-term {
+            font-weight: 700; color: var(--tech-blue);
+            background: #e2e8f0; padding: 0.25rem 0.9rem;
+            border-radius: 30px; text-align: center;
+            font-size: 0.82rem; height: fit-content;
+            white-space: nowrap; align-self: start;
+        }
+        .incident-box {
+            background: #ffefe3; border-left: 6px solid var(--tech-orange);
+            padding: 1.2rem 1.5rem; border-radius: 14px; margin: 1.2rem 0;
+            box-shadow: 0 4px 10px rgba(201,80,12,0.1);
+        }
+        .incident-box > strong { color: #a13e0a; font-size: 1.05rem; display: block; margin-bottom: 0.4rem; }
+        .incident-box p strong { color: #a13e0a; display: inline; font-size: inherit; }
+        .principles-box, .mistakes-box {
+            background: #e8f0fe; border-radius: 16px;
+            padding: 1.5rem; margin: 1.5rem 0; border: 1px solid #bdd3f0;
+        }
+        .mistakes-box { background: #fff4e5; border-color: #fac99b; }
+        pre {
+            background: var(--code-bg); color: var(--code-text);
+            padding: 1.2rem; border-radius: 14px; overflow-x: auto;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.82rem; margin: 1.2rem 0;
+            border: 1px solid #2f4052; white-space: pre-wrap; word-break: break-word;
+            line-height: 1.5;
+        }
+        table { width: 100%; border-collapse: collapse; margin: 1.2rem 0; font-size: 0.9rem; }
+        th { background: var(--tech-blue-light); color: white; font-weight: 600; padding: 0.7rem 1rem; }
+        td, th { border: 1px solid var(--border-light); padding: 0.65rem 1rem; vertical-align: top; word-break: break-word; }
+        tr:nth-child(even) { background: var(--tech-gray-100); }
+        .badge {
+            display: inline-block; background: var(--tech-green); color: white;
+            font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.8rem;
+            border-radius: 30px; text-transform: uppercase; margin-right: 0.5rem;
+        }
+        .badge.orange { background: var(--tech-orange); }
+        .footer-note {
+            background: var(--tech-gray-100); padding: 2rem;
+            border-radius: 20px; margin-top: 2rem; text-align: center;
+            color: var(--tech-gray-600); border: 1px solid var(--border-light);
+        }
+        ul, ol { padding-left: 1.8rem; margin: 0.8rem 0; }
+        li { margin: 0.3rem 0; }
+        hr { border: none; border-top: 2px dashed var(--tech-gray-200); margin: 1.8rem 0; }
+        .cover {
+            background: linear-gradient(145deg, #f0f4fa 0%, #ffffff 100%);
+            display: flex; flex-direction: column;
+            justify-content: flex-start; align-items: center;
+            text-align: center; padding-top: 3rem; padding-bottom: 3rem;
+        }
+        .cover h1 { font-size: 3.5rem; color: var(--tech-blue); margin-bottom: 1rem; }
+        .cover h2 { border-bottom: none; font-weight: 400; color: var(--tech-gray-600); }
+        .info-box {
+            background: #e8f0fe; border-left: 6px solid #4a90d9;
+            border-radius: 14px; padding: 1.2rem 1.8rem; margin: 1.2rem 0;
+        }
+        .info-box h4 { border-left: none; padding-left: 0; color: #1e4d8c; }
+        .best-practices-box {
+            background: #eaf7ee; border-left: 6px solid var(--tech-green);
+            border-radius: 14px; padding: 1.2rem 1.8rem; margin: 1.5rem 0;
+            border-top: 1px solid #b3dfc0; border-right: 1px solid #b3dfc0;
+            border-bottom: 1px solid #b3dfc0;
+        }
+        .best-practices-box h4 { border-left: none; padding-left: 0; color: var(--tech-green); }
+        .critical-box {
+            background: #fff3e0; border-left: 6px solid #f57c00;
+            border-radius: 14px; padding: 1.2rem 1.8rem; margin: 1.5rem 0;
+        }
+        .mermaid {
+            background: #f7f9fc; border: 1px solid var(--border-light);
+            border-radius: 12px; padding: 1.2rem 1.5rem;
+            margin: 1.5rem 0; overflow-x: auto; text-align: center;
+        }
+        .mermaid svg { max-width: 100%; height: auto; }
+        code {
+            background: #eef0f5; color: var(--tech-blue);
+            padding: 0.1rem 0.4rem; border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.85em;
+        }
+        pre code { background: transparent; color: inherit; padding: 0; }
+        p { margin: 0.6rem 0; line-height: 1.65; }
+
+        .mod-tag {
+            display: inline-block;
+            font-size: 0.72rem; font-weight: 700;
+            padding: 0.18rem 0.75rem;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-right: 0;
+            vertical-align: middle;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .mod-1 { background: #d0e8ff; color: #0b2b4f; }
+        .mod-2 { background: #ffe5cc; color: #7a2e00; }
+        .mod-3 { background: #d4f0db; color: #1a5c2a; }
+        .mod-4 { background: #ede0ff; color: #3d1073; }
+
+
+        .slide-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 0.8rem;
+            padding: 0.45rem 1rem;
+            background: var(--tech-gray-100);
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            font-size: 0.8rem;
+            color: var(--tech-gray-600);
+            font-weight: 500;
+        }
+        .slide-breadcrumb .bc-sep { color: #b0bec5; margin: 0 0.1rem; }
+        .slide-breadcrumb .bc-slide { color: var(--tech-blue); font-weight: 600; }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            mermaid.initialize({
+                startOnLoad: true,
+                theme: 'default',
+                securityLevel: 'loose',
+                flowchart: { curve: 'basis' },
+                sequence: { actorMargin: 50 }
+            });
+        });
+    </script>
+</head>
+<body>
+    <header class="global-header">
+        <div class="logo-area">
+            <img src="https://raw.githubusercontent.com/sameer-techademy/default/refs/heads/main/Techademy-logo.png" alt="Techademy" style="height:38px; width:auto; display:block; filter: brightness(0) invert(1);">
+            <span class="logo-tagline">Exponential Engineer (E2) Program</span>
+        </div>
+        <div class="nav-controls">
+            <button class="nav-btn" id="homeBtn" title="Home"><i class="fas fa-home"></i></button>
+            <button class="nav-btn" id="prevBtn" title="Previous"><i class="fas fa-chevron-left"></i></button>
+            <span id="slide-counter">1 / 22</span>
+            <button class="nav-btn" id="nextBtn" title="Next"><i class="fas fa-chevron-right"></i></button>
+        </div>
+    </header>
+
+    <div class="slides-container" id="slidesContainer">
+
+        <!-- SLIDE 0: COVER -->
+        <section class="slide cover" data-index="0">
+            <h1>Apache Kafka</h1>
+            <h2>Schema, Security, Sagas &amp; Resilience &middot; 1 Day / 4 Hours</h2>
+            <div style="margin:2rem 0;">
+                <span class="badge">4 MODULES · 22 SLIDES</span>
+                <span class="badge orange">PRODUCTION CODE</span>
+                <span class="badge">APPLIED CONTEXT</span>
+                <span class="badge">JAVA 17 / SPRING BOOT</span>
+            </div>
+            <div style="font-size:1.1rem;color:var(--tech-blue);margin-top:1rem;">
+                <i class="fas fa-shield-alt"></i>&nbsp; Advanced Patterns &nbsp;&middot;&nbsp; Applied in a Payments Context
+            </div>
+            <div style="margin:1.5rem 0;color:var(--tech-gray-600);font-size:0.95rem;">
+                <strong>Stack:</strong> Java 17 &middot; Spring Boot &middot; Apache Kafka &nbsp;&middot;&nbsp;
+                <strong>Duration:</strong> 1 Day / 4 Hours
+            </div>
+            <div class="principles-box" style="max-width:720px;text-align:left;">
+                <h4>This module covers:</h4>
+                <ul>
+                    <li><strong>Module 1 — Schema Registry:</strong> Avro, schema evolution, backward/forward compatibility</li>
+                    <li><strong>Module 2 — Kafka Security:</strong> TLS, mutual TLS, ACLs, certificate lifecycle</li>
+                    <li><strong>Module 3 — Event-Driven Design:</strong> Events vs commands, pub-sub, choreography vs orchestration, sagas</li>
+                    <li><strong>Module 4 — Multi-Service Resilience:</strong> Retry strategies, failure classification, dead letter topics, idempotency</li>
+                    <li>Each module follows: Definition &middot; Architecture Diagram &middot; Scenario &middot; Failure Modes &middot; Root Cause &middot; Correct Approach &middot; Code &middot; Decision Matrix</li>
+                    <li><strong>Duration:</strong> 1 Day / 4 Hours &mdash; approx. 1 hour per module including code walkthroughs</li>
+                </ul>
+            </div>
+            <div style="margin-top:2rem;font-style:italic;color:var(--tech-gray-600);">Use arrow keys or navigation buttons to advance &middot; Each slide is individually scrollable</div>
+        </section>
+
+        <!-- SLIDE 1: TOPIC 6 - SCHEMA REGISTRY: WHAT / WHY / WHEN / WHERE / HOW -->
+        <section class="slide" data-index="1">
+            <div class="slide-breadcrumb"><span class="mod-tag mod-1">Module 1</span><span class="bc-sep">·</span><span class="bc-slide">Slide 1 of 5</span><span class="bc-sep">·</span><span>Schema Registry</span></div>
+            <h2><i class="fas fa-file-code" style="color:var(--tech-orange)"></i> <span class="mod-tag mod-1">Module 1</span> · Slide 1 &mdash; Schema Registry &mdash; What &amp; Why</h2>
+
+            <h3><i class="fas fa-book-open"></i> What: Concise Technical Definition</h3>
+            <div class="info-box">
+                <p><strong>Schema Registry</strong> is a distributed storage layer for Avro, JSON Schema, or Protobuf schemas that enforces a schema contract for Kafka messages. It stores versioned schemas, assigns a unique ID to each schema, and ensures that producers and consumers adhere to compatibility rules when schemas evolve.</p>
+                <p style="margin-top:0.6rem;"><strong>Avro</strong> is a binary serialization format with a schema embedded in the message (or referenced by ID). It provides a compact wire size and strong typing.</p>
+            </div>
+
+            <h3><i class="fas fa-question-circle"></i> Why Does It Exist</h3>
+            <p>Without schema enforcement, producers and consumers silently drift apart — a field rename or type change causes downstream deserialization failures, data corruption, or silent nulls. Schema Registry prevents this by:</p>
+            <ul>
+                <li>Rejecting incompatible schema changes at registration time.</li>
+                <li>Ensuring all messages are self-describing via a schema ID embedded in each message.</li>
+                <li>Allowing controlled evolution — adding or removing optional fields — without breaking existing clients.</li>
+            </ul>
+
+            <h3><i class="fas fa-calendar-check"></i> When to Use It</h3>
+            <ul>
+                <li>Any production Kafka topic shared across multiple services.</li>
+                <li>When schemas need to evolve without stopping or redeploying consumers.</li>
+                <li>For high-throughput systems where compact binary encoding (Avro) reduces network and storage costs.</li>
+                <li>In regulated environments where data lineage and auditability are required.</li>
+            </ul>
+
+            <h3><i class="fas fa-map"></i> Where to Use It &mdash; Architectural Layers</h3>
+            <div class="wwwh-grid">
+                <div class="wwwh-term">Producer</div>
+                <div>Serializers interact with Schema Registry to resolve schema IDs before publishing messages to Kafka.</div>
+                <div class="wwwh-term">Consumer</div>
+                <div>Deserializers fetch the schema by ID to reconstruct strongly-typed objects on receipt.</div>
+                <div class="wwwh-term">CI/CD</div>
+                <div>Schema registration and compatibility checks are automated as a pipeline gate before deployment.</div>
+                <div class="wwwh-term">Governance</div>
+                <div>Centralised schema management with versioning, subject-level access control, and audit history.</div>
+            </div>
+
+            <h3><i class="fas fa-cogs"></i> How to Implement &mdash; High-Level Steps</h3>
+            <ol>
+                <li>Deploy Schema Registry (Confluent or open-source) alongside your Kafka cluster.</li>
+                <li>Define Avro schemas (<code>.avsc</code> files) within your project source tree.</li>
+                <li>Configure Spring Boot producers with <code>KafkaAvroSerializer</code> and <code>auto.register.schemas=false</code>.</li>
+                <li>Configure consumers with <code>KafkaAvroDeserializer</code> and <code>specific.avro.reader=true</code>.</li>
+                <li>Set compatibility mode on subjects (e.g., <code>BACKWARD</code> or <code>BACKWARD_TRANSITIVE</code>).</li>
+                <li>In CI, check compatibility (<code>POST /compatibility</code>) before registering new schema versions.</li>
+            </ol>
+        </section>
+
+        <!-- SLIDE 2: TOPIC 6 - ARCHITECTURE + SCENARIO + GOALS -->
+        <section class="slide" data-index="2">
+            <div class="slide-breadcrumb"><span class="mod-tag mod-1">Module 1</span><span class="bc-sep">·</span><span class="bc-slide">Slide 2 of 5</span><span class="bc-sep">·</span><span>Schema Registry</span></div>
+            <h2><i class="fas fa-project-diagram" style="color:var(--tech-orange)"></i> <span class="mod-tag mod-1">Module 1</span> · Slide 2 &mdash; Architecture Diagram &amp; Scenario</h2>
+
+            <h3><i class="fas fa-draw-polygon"></i> Architecture: Schema Registry Message Flow</h3>
+            <div class="mermaid">
+graph TB
+    subgraph ProducerSvc ["Producer Service"]
+        P[Avro Producer]
+        SRC[Schema Registry Client]
+    end
+    subgraph SR ["Schema Registry"]
+        SR1[Schema Storage]
+        SR2[Compatibility Check]
+    end
+    subgraph KafkaBroker ["Kafka"]
+        T[Topic with Avro Messages]
+    end
+    subgraph ConsumerSvc ["Consumer Service"]
+        C[Avro Consumer]
+        SR_C[Schema Registry Client]
+    end
+
+    P -->|1. Get schema ID| SR
+    SR -->|2. Return ID — register if needed| P
+    P -->|3. Send message with schema ID| T
+    C -->|4. Poll message| T
+    C -->|5. Fetch schema by ID| SR
+    SR -->|6. Return schema| C
+    C -->|7. Deserialize message| C
+            </div>
+
+            <h3><i class="fas fa-play-circle"></i> Scenario: Field Rename Causes Silent Data Corruption</h3>
+            <div class="incident-box">
+                <strong>Problem</strong>
+                <p>A service renames the field <code>amt</code> to <code>amount</code>. All downstream consumers break silently — no exception is raised, but the analytics pipeline ingests <code>NaN</code> for three days before the issue is identified.</p>
+            </div>
+            <div class="best-practices-box">
+                <h4>Solution</h4>
+                <p>With Schema Registry configured in <code>BACKWARD</code> mode, the renamed field is detected as an incompatible change and the registration is rejected at the CI stage. Alternatively, adding the new field as optional with a default allows consumers on the old schema to continue reading messages — seeing <code>null</code> for the new field — without any downtime.</p>
+            </div>
+
+            <h3><i class="fas fa-bullseye"></i> Goals &mdash; Desired Outcomes</h3>
+            <table>
+                <tr><th>Requirement</th><th>Target</th></tr>
+                <tr><td>Silent data corruption from schema changes</td><td>Zero occurrences</td></tr>
+                <tr><td>Consumer compatibility during rolling upgrades</td><td>No downtime</td></tr>
+                <tr><td>Additional latency per message (schema ID lookup)</td><td>&le;5ms (cached after first call)</td></tr>
+                <tr><td>Schema changes gated by automated CI compatibility check</td><td>100% of changes</td></tr>
+            </table>
+        </section>
+
+        <!-- SLIDE 3: TOPIC 6 - FAILURE MODES + ROOT CAUSE + CORRECT APPROACH + KEY PRINCIPLES -->
+        <section class="slide" data-index="3">
+            <div class="slide-breadcrumb"><span class="mod-tag mod-1">Module 1</span><span class="bc-sep">·</span><span class="bc-slide">Slide 3 of 5</span><span class="bc-sep">·</span><span>Schema Registry</span></div>
+            <h2><i class="fas fa-bug" style="color:var(--tech-orange)"></i> <span class="mod-tag mod-1">Module 1</span> · Slide 3 &mdash; Failure Modes, Root Cause &amp; Correct Approach</h2>
+
+            <h3><i class="fas fa-exclamation-circle"></i> What Can Go Wrong &mdash; Failure Modes</h3>
+            <ul>
+                <li>Raw JSON strings without schema enforcement — field rename breaks consumers silently with no error at runtime.</li>
+                <li><code>auto.register.schemas=true</code> in production — any local execution can register new schema versions, bypassing code review.</li>
+                <li>An incompatible <code>FULL_TRANSITIVE</code> change — breaks all historical consumers simultaneously.</li>
+                <li>Using <code>GenericRecord</code> instead of a generated class — loss of compile-time type safety; errors surface at runtime.</li>
+                <li>Omitting <code>specific.avro.reader=true</code> — the consumer receives a <code>GenericRecord</code>; casting fails and the application crashes.</li>
+            </ul>
+
+            <h3><i class="fas fa-stethoscope"></i> Root Cause Analysis</h3>
+            <div class="incident-box">
+                <strong>Silent Breakage</strong>
+                <p>Without a schema contract, the producer and consumer are coupled through an implicit, undocumented understanding of the message format. Any change on one side is invisible to the other until a runtime deserialization failure occurs in production.</p>
+            </div>
+            <ul>
+                <li><strong>Uncontrolled registration:</strong> With <code>auto.register.schemas=true</code>, a developer running a test locally can inadvertently register a breaking schema version directly against the production registry.</li>
+                <li><strong>Misconfigured compatibility mode:</strong> Setting mode to <code>NONE</code> disables all evolution checks, allowing any change regardless of impact on existing consumers.</li>
+                <li><strong>Missing defaults for new fields:</strong> Adding a required field with no default makes every existing message on the topic unreadable by the new schema version.</li>
+            </ul>
+
+            <h3><i class="fas fa-check-double"></i> Correct Approach &mdash; Architectural Pattern</h3>
+            <div class="best-practices-box">
+                <h4>Schema Evolution Rules</h4>
+                <ul>
+                    <li>Use <code>BACKWARD</code> or <code>BACKWARD_TRANSITIVE</code> for most production topics — new consumers can read messages written with older schemas.</li>
+                    <li><strong>CI/CD gating:</strong> Run <code>POST /compatibility</code> in the pipeline; never auto-register schemas in any environment above development.</li>
+                    <li><strong>Idempotent evolution:</strong> Always add new fields as optional with a default (<code>["null","string"]</code> with <code>"default":null</code>). Never remove fields — deprecate them and retain them with a default.</li>
+                    <li><strong>Code generation:</strong> Generate Java classes from <code>.avsc</code> files at build time to enforce type safety at compile time, not at runtime.</li>
+                </ul>
+            </div>
+
+            <h3><i class="fas fa-lightbulb"></i> Key Principles</h3>
+            <ul>
+                <li>Compatibility modes — <code>BACKWARD</code>, <code>FORWARD</code>, <code>FULL</code> — define the contract for how producers and consumers may evolve independently over time.</li>
+                <li>The schema ID embedded in each message header enables self-describing data without sending the full schema on every message.</li>
+                <li>Client-side schema caching reduces round trips to the registry to a single lookup per schema ID per client lifecycle.</li>
+            </ul>
+        </section>
+
+        <!-- SLIDE 4: TOPIC 6 - CODE IMPLEMENTATION -->
+        <section class="slide" data-index="4">
+            <div class="slide-breadcrumb"><span class="mod-tag mod-1">Module 1</span><span class="bc-sep">·</span><span class="bc-slide">Slide 4 of 5</span><span class="bc-sep">·</span><span>Schema Registry</span></div>
+            <h2><i class="fas fa-code" style="color:var(--tech-orange)"></i> <span class="mod-tag mod-1">Module 1</span> · Slide 4 &mdash; Code Implementation</h2>
+
+            <h3><i class="fas fa-box"></i> pom.xml &mdash; Dependencies &amp; Avro Code Generation Plugin</h3>
+            <pre>&lt;dependency&gt;
+    &lt;groupId&gt;io.confluent&lt;/groupId&gt;
+    &lt;artifactId&gt;kafka-avro-serializer&lt;/artifactId&gt;
+    &lt;version&gt;7.6.0&lt;/version&gt;
+&lt;/dependency&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.apache.avro&lt;/groupId&gt;
+    &lt;artifactId&gt;avro&lt;/artifactId&gt;
+    &lt;version&gt;1.11.3&lt;/version&gt;
+&lt;/dependency&gt;
+&lt;plugin&gt;
+    &lt;groupId&gt;org.apache.avro&lt;/groupId&gt;
+    &lt;artifactId&gt;avro-maven-plugin&lt;/artifactId&gt;
+    &lt;version&gt;1.11.3&lt;/version&gt;
+    &lt;executions&gt;
+        &lt;execution&gt;
+            &lt;goals&gt;&lt;goal&gt;schema&lt;/goal&gt;&lt;/goals&gt;
+            &lt;configuration&gt;
+                &lt;sourceDirectory&gt;src/main/avro&lt;/sourceDirectory&gt;
+            &lt;/configuration&gt;
+        &lt;/execution&gt;
+    &lt;/executions&gt;
+&lt;/plugin&gt;</pre>
+
+            <h3><i class="fas fa-sliders-h"></i> application.yml</h3>
+            <pre>spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+      properties:
+        schema.registry.url: http://localhost:8081
+        auto.register.schemas: false      # never auto-register in production
+        use.latest.version: true
+    consumer:
+      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+      properties:
+        schema.registry.url: http://localhost:8081
+        specific.avro.reader: true        # use generated class, not GenericRecord</pre>
+
+            <h3><i class="fas fa-file-alt"></i> Avro Schema v1 &mdash; payment-event-v1.avsc</h3>
+            <pre>{
+  "type": "record",
+  "name": "PaymentEvent",
+  "namespace": "com.example.payments",
+  "fields": [
+    { "name": "paymentId", "type": "string" },
+    { "name": "amount",    "type": "double" },
+    { "name": "currency",  "type": "string" }
+  ]
+}</pre>
+
+            <h3><i class="fas fa-code-branch"></i> Avro Schema v2 &mdash; Backward-Compatible Evolution (adds optional field)</h3>
+            <pre>{
+  "type": "record",
+  "name": "PaymentEvent",
+  "namespace": "com.example.payments",
+  "fields": [
+    { "name": "paymentId", "type": "string" },
+    { "name": "amount",    "type": "double" },
+    { "name": "currency",  "type": "string" },
+    { "name": "region",    "type": ["null", "string"], "default": null }
+  ]
+}</pre>
+
+            <h3><i class="fas fa-upload"></i> Producer</h3>
+            <pre>@Service
+public class PaymentAvroProducer {
+    private final KafkaTemplate&lt;String, PaymentEvent&gt; kafkaTemplate;
+
+    public PaymentAvroProducer(KafkaTemplate&lt;String, PaymentEvent&gt; kafkaTemplate) {
+        this.kafkaTemplate = kafkaTemplate;
+    }
+
+    public void publish(PaymentEvent event) {
+        kafkaTemplate.send("payment-events", event.getPaymentId(), event);
+    }
+}</pre>
+
+            <h3><i class="fas fa-download"></i> Consumer</h3>
+            <pre>@Component
+public class PaymentAvroConsumer {
+    @KafkaListener(topics = "payment-events", groupId = "avro-consumer")
+    public void consume(PaymentEvent event) {
+        System.out.printf("Received: %s  amount=%.2f  region=%s%n",
+            event.getPaymentId(), event.getAmount(), event.getRegion());
+    }
+}</pre>
+
+            <h3><i class="fas fa-terminal"></i> CI Pipeline &mdash; Compatibility Check Before Registration</h3>
+            <pre># 1. Dry-run: verify the new schema is compatible before registering it
+curl -X POST http://localhost:8081/compatibility/subjects/payment-events-value/versions/latest \
+     -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+     -d '{"schema": "{\"type\":\"record\",...}"}'
+
+# 2. Register only if the compatibility check above passes
+curl -X POST http://localhost:8081/subjects/payment-events-value/versions \
+     -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+     -d '{"schema": "..."}'</pre>
+        </section>
+
+        <!-- SLIDE 5: TOPIC 6 - EXECUTION FLOW + ANTI-PATTERNS + DECISION MATRIX -->
+        <section class="slide" data-index="5">
+            <div class="slide-breadcrumb"><span class="mod-tag mod-1">Module 1</span><span class="bc-sep">·</span><span class="bc-slide">Slide 5 of 5</span><span class="bc-sep">·</span><span>Schema Registry</span></div>
+            <h2><i class="fas fa-stream" style="color:var(--tech-orange)"></i> <span class="mod-tag mod-1">Module 1</span> · Slide 5 &mdash; Execution Flow, Anti-Patterns &amp; Decision Matrix</h2>
+
+            <h3><i class="fas fa-sitemap"></i> Execution Flow &mdash; Schema Registration &amp; Message Lifecycle</h3>
+            <div class="mermaid">
+sequenceDiagram
+    participant CICD as CI/CD
+    participant SR as Schema Registry
+    participant Producer
+    participant Kafka
+    participant Consumer
+
+    CICD->>SR: Register schema v1 (BACKWARD mode)
+    SR-->>CICD: Schema ID = 1
+    Producer->>SR: Request schema ID for topic
+    SR-->>Producer: ID 1
+    Producer->>Kafka: Send message with schema ID 1
+    Consumer->>Kafka: Poll message
+    Kafka-->>Consumer: Message (ID 1)
+    Consumer->>SR: Fetch schema by ID 1
+    SR-->>Consumer: Schema v1
+    Note over Consumer: Deserializes successfully
+    CICD->>SR: Register schema v2 (add optional field)
+    SR-->>CICD: Schema ID = 2 (compatible)
+    Producer->>SR: Get schema ID for new version
+    SR-->>Producer: ID 2
+    Producer->>Kafka: Send message with schema ID 2
+    Consumer->>Kafka: Poll message (ID 2)
+    Consumer->>SR: Fetch schema by ID 2
+    SR-->>Consumer: Schema v2
+    Note over Consumer: Deserializes — region is null for messages written with v1
+            </div>
+
+            <h3><i class="fas fa-exclamation-triangle"></i> Common Mistakes &mdash; Anti-Patterns</h3>
+            <div class="mistakes-box">
+                <ul>
+                    <li><code>auto.register.schemas=true</code> in production — schemas can drift without any review or approval.</li>
+                    <li>Choosing <code>NONE</code> compatibility — any change is allowed; consumers can break at any deployment.</li>
+                    <li>Adding a required field without a default — all messages already on the topic become unreadable by the new schema.</li>
+                    <li>Skipping compatibility checks in CI — breaking changes surface in production, not in the pipeline.</li>
+                    <li>Using <code>GenericRecord</code> — type safety is lost; runtime failures replace compile-time errors.</li>
+                </ul>
+            </div>
+
+            <h3><i class="fas fa-table"></i> Decision Matrix &mdash; Avro vs JSON Schema vs Protobuf</h3>
+            <table>
+                <tr>
+                    <th>Feature</th>
+                    <th>Avro (with Registry)</th>
+                    <th>JSON Schema</th>
+                    <th>Protobuf</th>
+                </tr>
+                <tr>
+                    <td><strong>Wire size</strong></td>
+                    <td>Small (binary)</td>
+                    <td>Large (text)</td>
+                    <td>Small (binary)</td>
+                </tr>
+                <tr>
+                    <td><strong>Schema evolution</strong></td>
+                    <td>Strong, configurable</td>
+                    <td>Moderate</td>
+                    <td>Strong</td>
+                </tr>
+                <tr>
+                    <td><strong>Code generation</strong></td>
+                    <td>Yes — avro-maven-plugin</td>
+                    <td>Optional — jsonschema2pojo</td>
+                    <td>Yes — protoc</td>
+                </tr>
+                <tr>
+                    <td><strong>Schema Registry integration</strong></td>
+                    <td>Native</td>
+                    <td>Supported (Confluent)</td>
+                    <td>Supported (Confluent)</td>
+                </tr>
+                <tr>
+                    <td><strong>Human-readable payload</strong></td>
+                    <td>No</td>
+                    <td>Yes</td>
+                    <td>No</td>
+                </tr>
+                <tr>
+                    <td><strong>Best for</strong></td>
+                    <td>High-throughput inter-service messaging</td>
+                    <td>REST APIs, debugging</td>
+                    <td>gRPC + Kafka hybrid</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- SLIDE 6: TOPIC 7 - KAFKA SECURITY: WHAT / WHY / WHEN / WHERE / HOW -->
+        <section class="slide" data-index="6">
+            <div class="slide-breadcrumb"><span class="mod-tag mod-2">Module 2</span><span class="bc-sep">·</span><span class="bc-slide">Slide 1 of 5</span><span class="bc-sep">·</span><span>Kafka Security</span></div>
+            <h2><i class="fas fa-shield-alt" style="color:var(--tech-orange)"></i> <span class="mod-tag mod-2">Module 2</span> · Slide 1 &mdash; Kafka Security &mdash; What, Why &amp; How</h2>
+
+            <h3><i class="fas fa-book-open"></i> What: Concise Technical Definition</h3>
+            <div class="info-box">
+                <p>Kafka security is composed of three complementary layers:</p>
+                <ul>
+                    <li><strong>Encryption (TLS)</strong> &mdash; protects data in transit between clients and brokers.</li>
+                    <li><strong>Authentication</strong> &mdash; verifies the identity of clients and brokers using SSL mutual TLS (mTLS) or SASL mechanisms.</li>
+                    <li><strong>Authorization (ACLs)</strong> &mdash; controls which authenticated principals can perform which operations on which resources (topics, consumer groups, cluster).</li>
+                </ul>
+            </div>
+
+            <h3><i class="fas fa-question-circle"></i> Why Does It Exist</h3>
+            <p>Without security controls, any service on the network can connect to Kafka, read sensitive data, or inject fraudulent events. Compliance requirements mandate encryption at rest and in transit, along with verifiable access control. Mutual TLS ties client identity to a certificate, enabling fine-grained, service-level ACL enforcement.</p>
+
+            <h3><i class="fas fa-calendar-check"></i> When to Use It</h3>
+            <ul>
+                <li>Any production cluster handling PII, financial data, or regulated information.</li>
+                <li>Multi-tenant environments where teams require isolation between topics and consumer groups.</li>
+                <li>When network segmentation alone is insufficient — security in depth is required.</li>
+            </ul>
+
+            <h3><i class="fas fa-map"></i> Where to Apply</h3>
+            <div class="wwwh-grid">
+                <div class="wwwh-term">Broker</div>
+                <div>Configure SSL listeners on each broker; disable all plaintext ports in production.</div>
+                <div class="wwwh-term">Client</div>
+                <div>Each service application configures a keystore (client identity) and truststore (CA trust) to participate in mTLS.</div>
+                <div class="wwwh-term">Operations</div>
+                <div>Manage certificate rotation schedules and ACL definitions per principal across the cluster lifecycle.</div>
+            </div>
+
+            <h3><i class="fas fa-cogs"></i> How to Implement &mdash; High-Level Steps</h3>
+            <ol>
+                <li>Generate a Certificate Authority (CA) and issue broker and client certificates signed by it.</li>
+                <li>Configure broker <code>server.properties</code> with an SSL listener, keystore and truststore paths, and <code>ssl.client.auth=required</code>.</li>
+                <li>Configure each client application with its own keystore (identity) and truststore (CA verification).</li>
+                <li>Set <code>authorizer.class.name</code> and define ACLs per principal. The principal is derived from the certificate Common Name (CN).</li>
+                <li>Remove all plaintext listeners so no unencrypted path remains open on the cluster.</li>
+            </ol>
+        </section>
+
+        <!-- SLIDE 7: TOPIC 7 - ARCHITECTURE + SCENARIO + GOALS -->
+        <section class="slide" data-index="7">
+            <div class="slide-breadcrumb"><span class="mod-tag mod-2">Module 2</span><span class="bc-sep">·</span><span class="bc-slide">Slide 2 of 5</span><span class="bc-sep">·</span><span>Kafka Security</span></div>
+            <h2><i class="fas fa-project-diagram" style="color:var(--tech-orange)"></i> <span class="mod-tag mod-2">Module 2</span> · Slide 2 &mdash; Architecture, Scenario &amp; Goals</h2>
+
+            <h3><i class="fas fa-draw-polygon"></i> Architecture: mTLS + ACL Enforcement</h3>
+            <div class="mermaid">
+graph TB
+    subgraph KafkaBroker ["Kafka Broker"]
+        KS[Keystore — broker certificate]
+        TS[Truststore — CA]
+        ACL[Authorizer]
+    end
+    subgraph ClientSvc ["Client Service"]
+        CKS[Keystore — client certificate]
+        CTS[Truststore — CA]
+    end
+    subgraph CertAuth ["Certificate Authority"]
+        CA[Internal CA]
+    end
+    ClientSvc -->|mTLS handshake| KafkaBroker
+    KafkaBroker -->|verify client certificate| CA
+    ClientSvc -->|verify broker certificate| CA
+    KafkaBroker -->|evaluate ACL| ACL
+            </div>
+
+            <h3><i class="fas fa-play-circle"></i> Scenario: Unsecured Cluster Discovered in Audit</h3>
+            <div class="incident-box">
+                <strong>Problem</strong>
+                <p>A security audit reveals a Kafka cluster with no encryption or authentication. Any service on the internal network can connect, consume sensitive event data, or produce messages into any topic. The cluster is non-compliant with data protection regulations.</p>
+            </div>
+            <div class="best-practices-box">
+                <h4>Solution</h4>
+                <p>Enable SSL encryption and mutual TLS authentication on all broker listeners. Define topic-level ACLs so that only the authorized producer service can write to protected topics, and only designated consumer services can read from them. Disable the plaintext listener entirely — no path without TLS should exist.</p>
+            </div>
+
+            <h3><i class="fas fa-bullseye"></i> Goals &mdash; Desired Outcomes</h3>
+            <table>
+                <tr><th>Requirement</th><th>Target</th></tr>
+                <tr><td>Traffic encryption</td><td>100% &mdash; no plaintext ports active</td></tr>
+                <tr><td>Client authentication enforcement</td><td>Every connection must present a valid certificate</td></tr>
+                <tr><td>Unauthorized topic access</td><td>Zero &mdash; ACLs enforce least privilege per service</td></tr>
+                <tr><td>Certificate rotation</td><td>Automated, with &lt;5 min service impact per rotation</td></tr>
+            </table>
+        </section>
+
+        <!-- SLIDE 8: TOPIC 7 - FAILURE MODES + ROOT CAUSE + CORRECT APPROACH + KEY PRINCIPLES -->
+        <section class="slide" data-index="8">
+            <div class="slide-breadcrumb"><span class="mod-tag mod-2">Module 2</span><span class="bc-sep">·</span><span class="bc-slide">Slide 3 of 5</span><span class="bc-sep">·</span><span>Kafka Security</span></div>
+            <h2><i class="fas fa-bug" style="color:var(--tech-orange)"></i> <span class="mod-tag mod-2">Module 2</span> · Slide 3 &mdash; Failure Modes, Root Cause &amp; Correct Approach</h2>
+
+            <h3><i class="fas fa-exclamation-circle"></i> What Can Go Wrong &mdash; Failure Modes</h3>
+            <ul>
+                <li>Leaving plaintext port <code>9092</code> open alongside the SSL port &mdash; provides a complete security bypass for any client that knows the port.</li>
+                <li>Broker's self-signed certificate not present in the client truststore &mdash; the SSL handshake fails for all connecting clients.</li>
+                <li><code>ssl.endpoint.identification.algorithm</code> set to empty &mdash; disables hostname verification; man-in-the-middle attacks become feasible.</li>
+                <li>No ACLs defined after enabling mTLS &mdash; authenticated clients have unrestricted access to all topics and consumer groups.</li>
+                <li>Keystore passwords hardcoded in <code>application.yml</code> &mdash; credentials are committed to version control and exposed.</li>
+            </ul>
+
+            <h3><i class="fas fa-stethoscope"></i> Root Cause Analysis</h3>
+            <ul>
+                <li><strong>Plaintext port left open:</strong> Misconfiguration or oversight during initial setup; security controls applied inconsistently across the listener configuration.</li>
+                <li><strong>Truststore missing CA:</strong> The client cannot verify the broker's certificate chain, resulting in a TLS handshake failure on every connection attempt.</li>
+                <li><strong>Hostname verification disabled:</strong> The broker's certificate Subject Alternative Name (SAN) is not validated against the advertised listener address, allowing certificate substitution.</li>
+                <li><strong>No ACLs defined:</strong> Authentication establishes identity; without authorization rules, identity does not restrict access to any resource.</li>
+            </ul>
+
+            <h3><i class="fas fa-check-double"></i> Correct Approach &mdash; Architectural Pattern</h3>
+            <div class="best-practices-box">
+                <h4>Defense in Depth</h4>
+                <ul>
+                    <li><strong>Encrypt, authenticate, authorize</strong> &mdash; all three layers must be active simultaneously. Enabling two out of three is insufficient.</li>
+                    <li><strong>Single SSL listener</strong> &mdash; configure only the SSL endpoint; remove all plaintext listeners from the broker configuration.</li>
+                    <li><strong>Certificate lifecycle management</strong> &mdash; use short-lived certificates (90-day rotation), automated via internal tooling or a secrets manager.</li>
+                    <li><strong>Principle of least privilege</strong> &mdash; define ACLs per principal with the minimum set of operations required for that service to function.</li>
+                </ul>
+            </div>
+
+            <h3><i class="fas fa-lightbulb"></i> Key Principles</h3>
+            <ul>
+                <li><strong>Mutual TLS (mTLS):</strong> Both parties present and verify certificates before any data is exchanged &mdash; identity is cryptographic, not network-based.</li>
+                <li><strong>Principal:</strong> The client identity is extracted from the certificate's Common Name (CN) and used as the subject for ACL lookups.</li>
+                <li><strong>Hostname verification:</strong> Prevents man-in-the-middle attacks by requiring the certificate SAN to match the broker's advertised hostname.</li>
+                <li><strong>ACL evaluation:</strong> Kafka checks the tuple <code>(principal, resource, operation)</code> against the stored ACL list for every incoming request.</li>
+            </ul>
+        </section>
+
+        <!-- SLIDE 9: TOPIC 7 - CODE IMPLEMENTATION -->
+        <section class="slide" data-index="9">
+            <div class="slide-breadcrumb"><span class="mod-tag mod-2">Module 2</span><span class="bc-sep">·</span><span class="bc-slide">Slide 4 of 5</span><span class="bc-sep">·</span><span>Kafka Security</span></div>
+            <h2><i class="fas fa-code" style="color:var(--tech-orange)"></i> <span class="mod-tag mod-2">Module 2</span> · Slide 4 &mdash; Code Implementation</h2>
+
+            <h3><i class="fas fa-server"></i> Broker Configuration &mdash; server.properties</h3>
+            <pre>listeners=SSL://0.0.0.0:9093
+advertised.listeners=SSL://kafka-broker1.example.com:9093
+security.inter.broker.protocol=SSL
+
+ssl.keystore.location=/etc/kafka/secrets/broker.keystore.jks
+ssl.keystore.password=${KEYSTORE_PASSWORD}
+ssl.key.password=${KEY_PASSWORD}
+ssl.truststore.location=/etc/kafka/secrets/broker.truststore.jks
+ssl.truststore.password=${TRUSTSTORE_PASSWORD}
+
+ssl.client.auth=required
+ssl.endpoint.identification.algorithm=https
+
+authorizer.class.name=kafka.security.authorizer.AclAuthorizer
+super.users=User:CN=admin,OU=Platform,O=Example</pre>
+
+            <h3><i class="fas fa-sliders-h"></i> Client Configuration &mdash; application.yml</h3>
+            <pre>spring:
+  kafka:
+    bootstrap-servers: kafka-broker1.example.com:9093
+    properties:
+      security.protocol: SSL
+      ssl.endpoint.identification.algorithm: https
+      ssl.keystore.location: classpath:certs/client.keystore.jks
+      ssl.keystore.password: ${KAFKA_KEYSTORE_PASSWORD}
+      ssl.key.password: ${KAFKA_KEY_PASSWORD}
+      ssl.truststore.location: classpath:certs/client.truststore.jks
+      ssl.truststore.password: ${KAFKA_TRUSTSTORE_PASSWORD}</pre>
+
+            <h3><i class="fas fa-terminal"></i> ACL Setup &mdash; CLI</h3>
+            <pre># Allow the producer service to write to the topic
+kafka-acls.sh --bootstrap-server localhost:9093 --command-config admin-client.properties \
+  --add --allow-principal "User:CN=payment-service,OU=Platform,O=Example" \
+  --operation Write --topic payment-events
+
+# Allow the analytics service to read from the topic
+kafka-acls.sh --bootstrap-server localhost:9093 --command-config admin-client.properties \
+  --add --allow-principal "User:CN=analytics-service,OU=Platform,O=Example" \
+  --operation Read --topic payment-events --group analytics-group
+
+# List current ACLs for a topic
+kafka-acls.sh --bootstrap-server localhost:9093 --command-config admin-client.properties \
+  --list --topic payment-events</pre>
+
+            <h3><i class="fas fa-code"></i> Programmatic SSL Configuration (Spring Boot)</h3>
+            <pre>@Configuration
+public class KafkaSecurityConfig {
+
+    @Bean
+    public ProducerFactory&lt;String, String&gt; secureProducerFactory(
+            @Value("${kafka.ssl.keystore-location}")  String keystoreLoc,
+            @Value("${kafka.ssl.keystore-password}")  String keystorePass,
+            @Value("${kafka.ssl.key-password}")       String keyPass,
+            @Value("${kafka.ssl.truststore-location}") String truststoreLoc,
+            @Value("${kafka.ssl.truststore-password}") String truststorePass) {
+
+        Map&lt;String, Object&gt; props = new HashMap&lt;&gt;();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka-broker1.example.com:9093");
+        props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SSL");
+        props.put(SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG, keystoreLoc);
+        props.put(SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG, keystorePass);
+        props.put(SslConfigs.SSL_KEY_PASSWORD_CONFIG, keyPass);
+        props.put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, truststoreLoc);
+        props.put(SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG, truststorePass);
+        props.put(SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG, "https");
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+
+        return new DefaultKafkaProducerFactory&lt;&gt;(props);
+    }
+}</pre>
+        </section>
+
+        <!-- SLIDE 10: TOPIC 7 - EXECUTION FLOW + ANTI-PATTERNS + DECISION MATRIX -->
+        <section class="slide" data-index="10">
+            <div class="slide-breadcrumb"><span class="mod-tag mod-2">Module 2</span><span class="bc-sep">·</span><span class="bc-slide">Slide 5 of 5</span><span class="bc-sep">·</span><span>Kafka Security</span></div>
+            <h2><i class="fas fa-stream" style="color:var(--tech-orange)"></i> <span class="mod-tag mod-2">Module 2</span> · Slide 5 &mdash; Execution Flow, Anti-Patterns &amp; Decision Matrix</h2>
+
+            <h3><i class="fas fa-sitemap"></i> Execution Flow &mdash; mTLS Handshake &amp; ACL Check</h3>
+            <div class="mermaid">
+sequenceDiagram
+    participant Client
+    participant Broker
+    participant CA as Certificate Authority
+    participant ACL
+
+    Client->>Broker: SSL handshake (ClientHello)
+    Broker->>Client: ServerHello + Broker Certificate
+    Note over Client: Verify broker certificate via Truststore
+    Client->>Broker: Client Certificate
+    Note over Broker: Verify client certificate via Truststore
+    Broker->>ACL: Check — can CN=payment-service Write on topic payment-events?
+    ACL-->>Broker: Allow
+    Broker-->>Client: SSL established, client authenticated
+    Client->>Broker: Produce message (authorized)
+            </div>
+
+            <h3><i class="fas fa-exclamation-triangle"></i> Common Mistakes &mdash; Anti-Patterns</h3>
+            <div class="mistakes-box">
+                <ul>
+                    <li>Leaving plaintext port open alongside the SSL port &mdash; any client can bypass the entire security configuration.</li>
+                    <li><code>ssl.endpoint.identification.algorithm</code> set to empty &mdash; hostname verification is disabled, enabling man-in-the-middle attacks.</li>
+                    <li>Hardcoding keystore passwords in <code>application.yml</code> &mdash; credentials leak via version control or build artifacts.</li>
+                    <li><code>ssl.client.auth=none</code> &mdash; clients are not authenticated; ACLs would then rely on IP address, which is spoofable.</li>
+                    <li>Not rotating certificates &mdash; expired certificates cause unplanned production outages.</li>
+                    <li>ACLs using wildcard (<code>*</code>) on topic resources &mdash; least privilege is violated; any authenticated client has full access.</li>
+                </ul>
+            </div>
+
+            <h3><i class="fas fa-table"></i> Decision Matrix &mdash; mTLS vs SASL/PLAIN vs SASL/SCRAM</h3>
+            <table>
+                <tr>
+                    <th>Feature</th>
+                    <th>mTLS</th>
+                    <th>SASL/PLAIN + TLS</th>
+                    <th>SASL/SCRAM + TLS</th>
+                </tr>
+                <tr>
+                    <td><strong>Authentication method</strong></td>
+                    <td>X.509 certificates</td>
+                    <td>Username / password</td>
+                    <td>Username / password with salt</td>
+                </tr>
+                <tr>
+                    <td><strong>Credential rotation</strong></td>
+                    <td>Certificate renewal</td>
+                    <td>Password change</td>
+                    <td>Password change</td>
+                </tr>
+                <tr>
+                    <td><strong>Identity for ACLs</strong></td>
+                    <td>CN from certificate</td>
+                    <td>Username</td>
+                    <td>Username</td>
+                </tr>
+                <tr>
+                    <td><strong>Operational overhead</strong></td>
+                    <td>CA management, cert renewal automation</td>
+                    <td>Simple, no CA required</td>
+                    <td>Medium</td>
+                </tr>
+                <tr>
+                    <td><strong>Security strength</strong></td>
+                    <td>Strong (asymmetric cryptography)</td>
+                    <td>Password transmitted over TLS</td>
+                    <td>Stronger than PLAIN</td>
+                </tr>
+                <tr>
+                    <td><strong>Best use case</strong></td>
+                    <td>Service-to-service identity, mTLS service mesh</td>
+                    <td>Human users, simpler development setups</td>
+                    <td>When PLAIN is insufficient</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- SLIDE 11: TOPIC 8 - EVENTS vs COMMANDS: WHAT / WHY / WHEN / WHERE / HOW -->
+        <section class="slide" data-index="11">
+            <div class="slide-breadcrumb"><span class="mod-tag mod-3">Module 3</span><span class="bc-sep">·</span><span class="bc-slide">Slide 1 of 5</span><span class="bc-sep">·</span><span>Event-Driven Design</span></div>
+            <h2><i class="fas fa-exchange-alt" style="color:var(--tech-orange)"></i> <span class="mod-tag mod-3">Module 3</span> · Slide 1 &mdash; Events vs Commands, Pub-Sub &amp; Sagas</h2>
+
+            <h3><i class="fas fa-book-open"></i> What: Concise Technical Definitions</h3>
+            <div class="wwwh-grid">
+                <div class="wwwh-term">Event</div>
+                <div>A fact that has occurred in the past (e.g., <code>PaymentCreated</code>). Events are immutable and broadcast to any interested parties. The publisher has no knowledge of who consumes the event.</div>
+                <div class="wwwh-term">Command</div>
+                <div>A request for a specific action to be performed (e.g., <code>ReserveStock</code>). Commands have an explicit target and expect a response — success or failure.</div>
+                <div class="wwwh-term">Pub-Sub</div>
+                <div>A messaging pattern where publishers send events to topics and multiple subscribers — each in their own consumer group — receive all events independently.</div>
+                <div class="wwwh-term">Choreography</div>
+                <div>A decentralized coordination style where services react to events and emit their own events, with no central coordinator directing the flow.</div>
+                <div class="wwwh-term">Orchestration</div>
+                <div>A central service — the orchestrator — directs other services by sending commands and handling their responses, maintaining the overall workflow state.</div>
+                <div class="wwwh-term">Saga</div>
+                <div>A sequence of local transactions where each step publishes an event triggering the next step. If a step fails, compensating transactions undo previous steps to restore consistency.</div>
+            </div>
+
+            <h3><i class="fas fa-question-circle"></i> Why Does It Exist</h3>
+            <p>Tight coupling via synchronous REST calls leads to cascading failures, low resilience, and tangled service dependencies. Event-driven architectures decouple services, improve scalability, and enable independent evolution. Sagas provide data consistency across service boundaries without distributed transactions (2PC), which are impractical in microservice environments.</p>
+
+            <h3><i class="fas fa-calendar-check"></i> When to Use Each Pattern</h3>
+            <ul>
+                <li><strong>Events:</strong> Broadcasting facts to multiple independent consumers — audit logs, analytics, notifications, derived state updates.</li>
+                <li><strong>Commands:</strong> Point-to-point requests where a specific service must act; prefer synchronous channels with a reply unless asynchrony is a requirement.</li>
+                <li><strong>Choreography:</strong> Simple, linear flows where each service can evolve and operate independently of others.</li>
+                <li><strong>Orchestration:</strong> Complex flows with conditional branches, error handling paths, or strict ordering requirements.</li>
+                <li><strong>Sagas:</strong> Any business process spanning multiple services that must maintain eventual consistency.</li>
+            </ul>
+
+            <h3><i class="fas fa-cogs"></i> How to Implement &mdash; High-Level Steps</h3>
+            <ol>
+                <li>Identify domain events using past-tense naming (e.g., <code>OrderPlaced</code>, <code>PaymentApproved</code>).</li>
+                <li>Design a topic per event type or per aggregate boundary.</li>
+                <li>Each consuming service maintains its own consumer group to receive all events independently (true fan-out).</li>
+                <li>For sagas: each step performs a local transaction and publishes an event; define compensating transactions for every state-mutating step.</li>
+                <li>Propagate a correlation ID in Kafka message headers to trace the complete flow across services.</li>
+            </ol>
+        </section>
+
+        <!-- SLIDE 12: TOPIC 8 - ARCHITECTURE + SCENARIO + GOALS -->
+        <section class="slide" data-index="12">
+            <div class="slide-breadcrumb"><span class="mod-tag mod-3">Module 3</span><span class="bc-sep">·</span><span class="bc-slide">Slide 2 of 5</span><span class="bc-sep">·</span><span>Event-Driven Design</span></div>
+            <h2><i class="fas fa-project-diagram" style="color:var(--tech-orange)"></i> <span class="mod-tag mod-3">Module 3</span> · Slide 2 &mdash; Architecture, Scenario &amp; Goals</h2>
+
+            <h3><i class="fas fa-draw-polygon"></i> Architecture: Choreography vs Orchestration</h3>
+            <div class="mermaid">
+flowchart TB
+    subgraph Choreography ["Choreography — Decentralized"]
+        direction TB
+        PS[Payment Service] -->|payment.created| K1[(Kafka)]
+        K1 -->|payment.created| IS[Inventory Service]
+        K1 -->|payment.created| FS[Fraud Service]
+        IS -->|stock.reserved| K1
+        FS -->|payment.approved| K1
+        K1 -->|stock.reserved| PS
+        K1 -->|payment.approved| PS
+    end
+
+    subgraph Orchestration ["Orchestration — Centralized"]
+        direction TB
+        O[Order Orchestrator]
+        IS2[Inventory Service]
+        PS2[Payment Service]
+        O -->|Command: reserveStock| IS2
+        O -->|Command: authorizePayment| PS2
+        IS2 -->|Response| O
+        PS2 -->|Response| O
+    end
+            </div>
+
+            <h3><i class="fas fa-play-circle"></i> Scenario: Checkout Flow</h3>
+            <ol>
+                <li>Customer places an order — Payment service publishes <code>PaymentCreated</code>.</li>
+                <li>Inventory service consumes the event, reserves stock, and publishes <code>StockReserved</code>.</li>
+                <li>Fraud service consumes the event, runs detection rules — if fraud is detected, publishes <code>PaymentFailed</code>.</li>
+                <li>Payment service listens to both <code>PaymentFailed</code> and <code>StockReserved</code> to finalize or cancel the transaction accordingly.</li>
+            </ol>
+
+            <h3><i class="fas fa-bullseye"></i> Goals &mdash; Desired Outcomes</h3>
+            <table>
+                <tr><th>Requirement</th><th>Outcome</th></tr>
+                <tr><td><strong>Loose coupling</strong></td><td>Services know only about events — not each other's internals or endpoints</td></tr>
+                <tr><td><strong>Resilience</strong></td><td>Failure of one service does not cascade to others</td></tr>
+                <tr><td><strong>Consistency</strong></td><td>Saga ensures all steps complete or compensating actions undo partial work</td></tr>
+                <tr><td><strong>Throughput</strong></td><td>Event-driven processing scales horizontally, independently per consumer group</td></tr>
+            </table>
+        </section>
+
+        <!-- SLIDE 13: TOPIC 8 - FAILURE MODES + ROOT CAUSE + CORRECT APPROACH + KEY PRINCIPLES -->
+        <section class="slide" data-index="13">
+            <div class="slide-breadcrumb"><span class="mod-tag mod-3">Module 3</span><span class="bc-sep">·</span><span class="bc-slide">Slide 3 of 5</span><span class="bc-sep">·</span><span>Event-Driven Design</span></div>
+            <h2><i class="fas fa-bug" style="color:var(--tech-orange)"></i> <span class="mod-tag mod-3">Module 3</span> · Slide 3 &mdash; Failure Modes, Root Cause &amp; Correct Approach</h2>
+
+            <h3><i class="fas fa-exclamation-circle"></i> What Can Go Wrong &mdash; Failure Modes</h3>
+            <ul>
+                <li>Publishing commands instead of events &mdash; the producer implicitly knows the consumer, re-introducing tight coupling through the message broker.</li>
+                <li>All consuming services sharing one consumer group &mdash; Kafka distributes events across consumers in the group; not all services receive every event.</li>
+                <li>No compensating transactions defined &mdash; a partial saga leaves data permanently inconsistent when any step fails.</li>
+                <li>Choreography without distributed tracing &mdash; debugging a multi-hop flow across services becomes an intractable forensic exercise.</li>
+                <li>Event names in imperative tense (<code>ProcessPayment</code>) &mdash; ambiguous intent; blurs the semantic boundary between events and commands.</li>
+            </ul>
+
+            <h3><i class="fas fa-stethoscope"></i> Root Cause Analysis</h3>
+            <ul>
+                <li><strong>Command over event:</strong> The producer expects a specific consumer to act, violating the decoupled pub-sub model and coupling services through message content.</li>
+                <li><strong>Shared consumer group:</strong> Kafka's partition assignment allocates each partition to exactly one consumer per group. Multiple services sharing a group will not all receive every event — fan-out requires independent consumer groups.</li>
+                <li><strong>Missing compensation:</strong> Developers focus on the success path and omit undo logic, assuming downstream steps always succeed.</li>
+                <li><strong>No correlation ID:</strong> Without a trace ID propagated in headers, log entries across services cannot be connected to a single originating transaction.</li>
+            </ul>
+
+            <h3><i class="fas fa-check-double"></i> Correct Approach &mdash; Architectural Pattern</h3>
+            <div class="best-practices-box">
+                <h4>Event-First Design</h4>
+                <ul>
+                    <li><strong>Model business facts, not service instructions.</strong> Use past-tense event names that describe what occurred, not what should be done next.</li>
+                    <li><strong>One consumer group per service</strong> to guarantee every interested service receives every event (complete fan-out).</li>
+                    <li><strong>Saga pattern:</strong> Every step that mutates state must be idempotent and must have a clearly defined compensating transaction.</li>
+                    <li><strong>Correlation IDs:</strong> Propagate a trace ID in Kafka message headers on every publish; read and re-propagate on every consume.</li>
+                </ul>
+            </div>
+
+            <h3><i class="fas fa-lightbulb"></i> Key Principles</h3>
+            <ul>
+                <li><strong>Idempotency:</strong> Event handlers must be safe to retry — processing the same event multiple times must yield the same state outcome.</li>
+                <li><strong>Eventual consistency:</strong> Sagas accept temporary inconsistency between services during execution but guarantee correctness once all saga steps complete.</li>
+                <li><strong>Compensating transactions:</strong> Must be explicitly designed, implemented, and tested for every step that mutates shared or durable state.</li>
+            </ul>
+        </section>
+
+        <!-- SLIDE 14: TOPIC 8 - CODE IMPLEMENTATION -->
+        <section class="slide" data-index="14">
+            <div class="slide-breadcrumb"><span class="mod-tag mod-3">Module 3</span><span class="bc-sep">·</span><span class="bc-slide">Slide 4 of 5</span><span class="bc-sep">·</span><span>Event-Driven Design</span></div>
+            <h2><i class="fas fa-code" style="color:var(--tech-orange)"></i> <span class="mod-tag mod-3">Module 3</span> · Slide 4 &mdash; Code Implementation</h2>
+
+            <h3><i class="fas fa-cube"></i> Event Record &mdash; Immutable Domain Fact</h3>
+            <pre>public record PaymentCreatedEvent(
+    String paymentId,
+    String orderId,
+    BigDecimal amount,
+    String currency,
+    Instant occurredAt
+) {
+    public PaymentCreatedEvent {
+        Objects.requireNonNull(paymentId);
+        if (occurredAt == null) occurredAt = Instant.now();
+    }
+}</pre>
+
+            <h3><i class="fas fa-upload"></i> Publisher &mdash; Payment Service</h3>
+            <pre>@Service
+public class PaymentService {
+    private final KafkaTemplate&lt;String, String&gt; kafkaTemplate;
+    private final ObjectMapper objectMapper;
+
+    public void processOrder(CreateOrderRequest req) throws Exception {
+        var event = new PaymentCreatedEvent(
+            UUID.randomUUID().toString(),
+            req.orderId(),
+            req.amount(),
+            req.currency(),
+            Instant.now()
+        );
+        String json = objectMapper.writeValueAsString(event);
+        kafkaTemplate.send("payment.created", event.paymentId(), json);
+    }
+}</pre>
+
+            <h3><i class="fas fa-download"></i> Independent Consumer &mdash; Inventory Service (own consumer group)</h3>
+            <pre>@Component
+public class InventoryEventHandler {
+    private final InventoryRepository repo;
+    private final KafkaTemplate&lt;String, String&gt; kafkaTemplate;
+    private final ObjectMapper om;
+
+    @KafkaListener(topics = "payment.created", groupId = "inventory-group")
+    public void handle(String message, Acknowledgment ack) throws Exception {
+        var event = om.readValue(message, PaymentCreatedEvent.class);
+        try {
+            repo.reserveIfPossible(event.orderId(), event.paymentId()); // idempotent upsert
+            var stockReserved = new StockReservedEvent(event.orderId(), event.paymentId());
+            kafkaTemplate.send("stock.reserved", event.paymentId(),
+                om.writeValueAsString(stockReserved));
+            ack.acknowledge();
+        } catch (OutOfStockException e) {
+            // Business failure — publish a domain event, do not throw
+            var failed = new StockReservationFailedEvent(event.orderId(), event.paymentId());
+            kafkaTemplate.send("stock.reservation-failed", event.paymentId(),
+                om.writeValueAsString(failed));
+            ack.acknowledge();
+        }
+    }
+}</pre>
+
+            <h3><i class="fas fa-undo"></i> Compensating Transaction &mdash; Release Stock on Payment Failure</h3>
+            <pre>@Component
+public class InventoryCompensationHandler {
+
+    @KafkaListener(topics = "payment.failed", groupId = "inventory-compensation-group")
+    public void releaseStock(String message) throws Exception {
+        var event = om.readValue(message, PaymentFailedEvent.class);
+        repo.releaseReservation(event.orderId());
+        kafkaTemplate.send("stock.released", event.paymentId(), message);
+    }
+}</pre>
+        </section>
+
+        <!-- SLIDE 15: TOPIC 8 - EXECUTION FLOW + ANTI-PATTERNS + DECISION MATRIX -->
+        <section class="slide" data-index="15">
+            <div class="slide-breadcrumb"><span class="mod-tag mod-3">Module 3</span><span class="bc-sep">·</span><span class="bc-slide">Slide 5 of 5</span><span class="bc-sep">·</span><span>Event-Driven Design</span></div>
+            <h2><i class="fas fa-stream" style="color:var(--tech-orange)"></i> <span class="mod-tag mod-3">Module 3</span> · Slide 5 &mdash; Execution Flow, Anti-Patterns &amp; Decision Matrix</h2>
+
+            <h3><i class="fas fa-sitemap"></i> Execution Flow &mdash; Saga Choreography with Compensation</h3>
+            <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant P as Payment Service
+    participant I as Inventory Service
+    participant F as Fraud Service
+    participant K as Kafka
+
+    P->>K: publish payment.created
+    K->>I: consume payment.created
+    K->>F: consume payment.created
+    I->>K: publish stock.reserved
+    F->>K: publish payment.approved
+    K->>P: consume stock.reserved + payment.approved
+    Note over P: Finalize payment
+
+    alt Fraud rejects payment
+        F->>K: publish payment.failed
+        K->>I: consume payment.failed
+        I->>K: publish stock.released (compensating transaction)
+    end
+            </div>
+
+            <h3><i class="fas fa-exclamation-triangle"></i> Common Mistakes &mdash; Anti-Patterns</h3>
+            <div class="mistakes-box">
+                <ul>
+                    <li>Sending commands over Kafka — the producer couples itself to a specific consumer, defeating the purpose of event-driven design.</li>
+                    <li>Using a single shared consumer group — events are load-balanced and are not broadcast to all services that need them.</li>
+                    <li>No compensation logic — the saga is stuck permanently in a partial state when any step fails.</li>
+                    <li>Imperative event names (e.g., <code>ProcessPayment</code>) — ambiguous; the intent of the message is unclear to consumers.</li>
+                    <li>No correlation ID propagated — logs across services cannot be linked to a single originating event or transaction.</li>
+                </ul>
+            </div>
+
+            <h3><i class="fas fa-table"></i> Decision Matrix &mdash; Choreography vs Orchestration</h3>
+            <table>
+                <tr>
+                    <th>Criteria</th>
+                    <th>Choreography</th>
+                    <th>Orchestration</th>
+                </tr>
+                <tr>
+                    <td><strong>Coupling</strong></td>
+                    <td>Very loose — services share only event schemas</td>
+                    <td>Tighter — services depend on the orchestrator</td>
+                </tr>
+                <tr>
+                    <td><strong>Visibility</strong></td>
+                    <td>Low — flow is distributed across multiple services</td>
+                    <td>High — orchestrator holds the complete flow state</td>
+                </tr>
+                <tr>
+                    <td><strong>Error handling</strong></td>
+                    <td>Each service manages its own compensations</td>
+                    <td>Centralised in the orchestrator</td>
+                </tr>
+                <tr>
+                    <td><strong>Complexity</strong></td>
+                    <td>Simpler for linear, independent flows</td>
+                    <td>Better suited for complex branching and conditional logic</td>
+                </tr>
+                <tr>
+                    <td><strong>Best for</strong></td>
+                    <td>Independent services with a small number of interaction steps</td>
+                    <td>Multi-step sagas requiring strict ordering and complex error paths</td>
+                </tr>
+                <tr>
+                    <td><strong>Debugging</strong></td>
+                    <td>Requires distributed tracing across all services</td>
+                    <td>Easier — the orchestrator is a single source of truth for flow state</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- SLIDE 16: TOPIC 9 - MULTI-SERVICE RESILIENCE: WHAT / WHY / WHEN / WHERE / HOW -->
+        <section class="slide" data-index="16">
+            <div class="slide-breadcrumb"><span class="mod-tag mod-4">Module 4</span><span class="bc-sep">·</span><span class="bc-slide">Slide 1 of 5</span><span class="bc-sep">·</span><span>Multi-Service Resilience</span></div>
+            <h2><i class="fas fa-network-wired" style="color:var(--tech-orange)"></i> <span class="mod-tag mod-4">Module 4</span> · Slide 1 &mdash; Multi-Service Event Flow &amp; Failure Handling</h2>
+
+            <h3><i class="fas fa-book-open"></i> What: Concise Technical Definition</h3>
+            <div class="info-box">
+                <p><strong>Multi-service event flow</strong> is a series of Kafka events that trigger processing across multiple services, forming a saga. <strong>Failure handling</strong> distinguishes three distinct categories, each requiring a different response strategy:</p>
+                <ul>
+                    <li><strong>Transient errors</strong> &mdash; temporary infrastructure failures (e.g., DB timeout, network blip); retry with exponential backoff.</li>
+                    <li><strong>Permanent errors</strong> &mdash; unrecoverable failures (e.g., malformed JSON, logic errors); route immediately to a Dead Letter Topic for manual review.</li>
+                    <li><strong>Business failures</strong> &mdash; valid but unsuccessful outcomes (e.g., out of stock, fraud detected); publish a compensating domain event, not an exception.</li>
+                </ul>
+                <p>Retries must be <strong>non-blocking</strong> — they must not stall the partition or delay processing of other messages.</p>
+            </div>
+
+            <h3><i class="fas fa-question-circle"></i> Why Does It Exist</h3>
+            <p>In distributed systems, failures are inevitable. Without structured handling, transient glitches cause message loss, permanently bad data blocks entire partitions, and business failures are misclassified as technical errors — breaking sagas and leaving data in inconsistent states. A deliberate failure taxonomy ensures each failure type is resolved with the correct strategy.</p>
+
+            <h3><i class="fas fa-calendar-check"></i> When to Use It</h3>
+            <ul>
+                <li>Any saga where each service step can fail independently of the others.</li>
+                <li>Services experiencing intermittent infrastructure failures such as database timeouts or transient network errors.</li>
+                <li>To prevent a single malformed message from stalling an entire consumer group indefinitely.</li>
+                <li>To enable automated recovery for transient failures without requiring manual intervention.</li>
+            </ul>
+
+            <h3><i class="fas fa-map"></i> Where to Use It</h3>
+            <div class="wwwh-grid">
+                <div class="wwwh-term">Consumer</div>
+                <div>Error handlers classify exceptions into transient, permanent, or business categories on receipt.</div>
+                <div class="wwwh-term">Retry Topics</div>
+                <div>Spring <code>@RetryableTopic</code> auto-creates retry and DLT topics with configurable backoff per exception type.</div>
+                <div class="wwwh-term">Database</div>
+                <div>Idempotency keys via database upserts prevent duplicate side effects from retried messages.</div>
+                <div class="wwwh-term">Operations</div>
+                <div>DLT recovery endpoints allow operators to inspect, fix, and replay failed messages to the original topic.</div>
+            </div>
+
+            <h3><i class="fas fa-cogs"></i> How to Implement &mdash; High-Level Steps</h3>
+            <ol>
+                <li>Define an exception hierarchy: <code>RetryableException</code>, <code>NonRetryableException</code>.</li>
+                <li>Configure <code>@RetryableTopic</code> with explicit <code>include</code> and <code>exclude</code> exception lists, and exponential backoff settings.</li>
+                <li>Implement idempotent handlers using database upserts keyed on the business identifier.</li>
+                <li>Propagate a correlation ID in Kafka message headers for end-to-end distributed tracing.</li>
+                <li>Configure DLT topics with sufficient retention and expose a recovery API for operational replay.</li>
+            </ol>
+        </section>
+
+        <!-- SLIDE 17: TOPIC 9 - ARCHITECTURE + SCENARIO + GOALS -->
+        <section class="slide" data-index="17">
+            <div class="slide-breadcrumb"><span class="mod-tag mod-4">Module 4</span><span class="bc-sep">·</span><span class="bc-slide">Slide 2 of 5</span><span class="bc-sep">·</span><span>Multi-Service Resilience</span></div>
+            <h2><i class="fas fa-project-diagram" style="color:var(--tech-orange)"></i> <span class="mod-tag mod-4">Module 4</span> · Slide 2 &mdash; Architecture, Scenario &amp; Goals</h2>
+
+            <h3><i class="fas fa-draw-polygon"></i> Architecture: Failure Handling Flow</h3>
+            <div class="mermaid">
+flowchart LR
+    subgraph ConsumerSvc ["Consumer Service"]
+        H[Handler]
+        EH[Error Classifier]
+    end
+
+    subgraph KafkaTopics ["Kafka Cluster"]
+        T[Main Topic]
+        R1[Retry Topic 0]
+        R2[Retry Topic 1]
+        DLT[Dead Letter Topic]
+        FE[Failure Event Topic]
+    end
+
+    H -->|transient error| EH
+    EH -->|retry with backoff| R1
+    R1 -->|retry again| R2
+    R2 -->|retries exhausted| DLT
+    H -->|permanent error| DLT
+    H -->|business failure| FE
+            </div>
+
+            <h3><i class="fas fa-play-circle"></i> Scenario: Checkout Saga with Mixed Failure Types</h3>
+            <div class="incident-box">
+                <strong>Three Failure Types in a Single Flow</strong>
+                <ul>
+                    <li><strong>Transient:</strong> InventoryService receives a database timeout &mdash; retried with exponential backoff; succeeds on the third attempt.</li>
+                    <li><strong>Permanent:</strong> FraudService receives a malformed JSON message &mdash; routed to the Dead Letter Topic immediately; operations team alerted.</li>
+                    <li><strong>Business:</strong> InventoryService determines the item is out of stock &mdash; publishes <code>stock.reservation-failed</code> as a domain event to trigger saga compensation, not sent to the DLT.</li>
+                </ul>
+            </div>
+
+            <h3><i class="fas fa-bullseye"></i> Goals &mdash; Desired Outcomes</h3>
+            <table>
+                <tr><th>Requirement</th><th>Target</th></tr>
+                <tr><td>Message loss after retry exhaustion</td><td>Zero &mdash; all unprocessable messages land in DLT for recovery</td></tr>
+                <tr><td>Recovery time for transient failures</td><td>&le;30 seconds via automatic backoff retry</td></tr>
+                <tr><td>Duplicate side effects from retries</td><td>None &mdash; idempotency keys prevent re-execution</td></tr>
+                <tr><td>DLT message recovery window</td><td>Operations can replay corrected messages within 24 hours</td></tr>
+            </table>
+        </section>
+
+        <!-- SLIDE 18: TOPIC 9 - FAILURE MODES + ROOT CAUSE + CORRECT APPROACH + KEY PRINCIPLES -->
+        <section class="slide" data-index="18">
+            <div class="slide-breadcrumb"><span class="mod-tag mod-4">Module 4</span><span class="bc-sep">·</span><span class="bc-slide">Slide 3 of 5</span><span class="bc-sep">·</span><span>Multi-Service Resilience</span></div>
+            <h2><i class="fas fa-bug" style="color:var(--tech-orange)"></i> <span class="mod-tag mod-4">Module 4</span> · Slide 3 &mdash; Failure Modes, Root Cause &amp; Correct Approach</h2>
+
+            <h3><i class="fas fa-exclamation-circle"></i> What Can Go Wrong &mdash; Failure Modes</h3>
+            <ul>
+                <li>Retrying permanent failures indefinitely &mdash; hammers downstream services with requests that can never succeed.</li>
+                <li>Business failures routed to the DLT &mdash; the saga loses the event and cannot trigger its compensating step.</li>
+                <li>No idempotency keys &mdash; retried messages execute their business logic multiple times, causing duplicate side effects.</li>
+                <li>No correlation ID &mdash; log entries across services cannot be linked; debugging a multi-hop failure is infeasible.</li>
+                <li>DLT configured with short retention &mdash; messages expire before the operations team can investigate and replay them.</li>
+            </ul>
+
+            <h3><i class="fas fa-stethoscope"></i> Root Cause Analysis</h3>
+            <ul>
+                <li><strong>Blind retry of all exceptions:</strong> Retrying a JSON parse error is a misclassification — it consumes the entire retry budget and will never succeed. The default behaviour of retrying all exceptions is rarely correct.</li>
+                <li><strong>Business failure treated as a technical exception:</strong> Throwing a <code>RuntimeException</code> for a business rule violation (e.g., fraud detected) routes the event to the DLT rather than triggering the compensating saga step.</li>
+                <li><strong>No idempotency key:</strong> Without a business-key-based upsert, a replayed message re-executes the state mutation, creating duplicate records or double-applied effects.</li>
+                <li><strong>Missing headers:</strong> If the correlation ID is not propagated from producer to consumer headers on every hop, connecting log entries across services is impossible.</li>
+            </ul>
+
+            <h3><i class="fas fa-check-double"></i> Correct Approach &mdash; Architectural Pattern</h3>
+            <div class="best-practices-box">
+                <h4>Structured Exception Classification and Recovery</h4>
+                <ul>
+                    <li><strong>Exception hierarchy:</strong> Define explicit base classes — <code>RetryableException</code> and <code>NonRetryableException</code> — and throw the appropriate type consistently.</li>
+                    <li><strong><code>@RetryableTopic</code> with explicit lists:</strong> Use <code>include</code> for retryable types and <code>exclude</code> for permanent failure types; never rely on defaults.</li>
+                    <li><strong>Idempotent receivers:</strong> Implement database upserts using the business key (<code>ON CONFLICT DO NOTHING</code>) to make every handler safe to replay.</li>
+                    <li><strong>Correlation headers:</strong> Propagate <code>X-Correlation-Id</code> in all Kafka message headers from first publish through every downstream consumer.</li>
+                    <li><strong>DLT strategy:</strong> Configure long retention, set up alerting on DLT consumer lag, and expose a secure replay API for the operations team.</li>
+                </ul>
+            </div>
+
+            <h3><i class="fas fa-lightbulb"></i> Key Principles</h3>
+            <ul>
+                <li><strong>Idempotency:</strong> The same event processed multiple times must yield the same result — processing once or ten times is indistinguishable from the system's perspective.</li>
+                <li><strong>Exponential backoff:</strong> Increasing delay between retry attempts prevents a thundering herd on services that are recovering from overload or transient failure.</li>
+                <li><strong>Dead letter channel:</strong> Isolates unprocessable messages from the main processing flow without stalling the partition or affecting other consumers.</li>
+                <li><strong>Observability:</strong> Trace IDs propagated in headers tie events across services into a queryable, correlated trace for debugging and audit.</li>
+            </ul>
+        </section>
+
+        <!-- SLIDE 19: TOPIC 9 - CODE IMPLEMENTATION -->
+        <section class="slide" data-index="19">
+            <div class="slide-breadcrumb"><span class="mod-tag mod-4">Module 4</span><span class="bc-sep">·</span><span class="bc-slide">Slide 4 of 5</span><span class="bc-sep">·</span><span>Multi-Service Resilience</span></div>
+            <h2><i class="fas fa-code" style="color:var(--tech-orange)"></i> <span class="mod-tag mod-4">Module 4</span> · Slide 4 &mdash; Code Implementation</h2>
+
+            <h3><i class="fas fa-layer-group"></i> Exception Classification Hierarchy</h3>
+            <pre>public class RetryableException    extends RuntimeException {}
+public class NonRetryableException extends RuntimeException {}</pre>
+
+            <h3><i class="fas fa-download"></i> Consumer with @RetryableTopic</h3>
+            <pre>@Component
+public class InventoryEventHandler {
+
+    @RetryableTopic(
+        attempts = "4",  // original attempt + 3 retries
+        backoff = @Backoff(delay = 2000, multiplier = 2.0, maxDelay = 30000),
+        include = RetryableException.class,
+        exclude = { JsonProcessingException.class, ValidationException.class },
+        topicSuffixingStrategy = TopicSuffixingStrategy.SUFFIX_WITH_INDEX_VALUE
+    )
+    @KafkaListener(topics = "payment.created", groupId = "inventory-group")
+    public void handle(String message, Acknowledgment ack) throws Exception {
+        try {
+            var event = om.readValue(message, PaymentCreatedEvent.class);
+            repo.reserveIdempotent(event.orderId(), event.paymentId());
+            ack.acknowledge();
+        } catch (JsonProcessingException e) {
+            throw new NonRetryableException("Malformed JSON", e);  // sent to DLT immediately
+        } catch (DataAccessException e) {
+            throw new RetryableException("DB timeout", e);          // retried with backoff
+        }
+    }
+
+    @DltHandler
+    public void onDlt(String message) {
+        log.error("[DLT] Permanent failure — alerting operations: {}", message);
+        // trigger alerting integration
+    }
+}</pre>
+
+            <h3><i class="fas fa-database"></i> Idempotent Repository &mdash; PostgreSQL Upsert</h3>
+            <pre>@Repository
+public class InventoryRepository {
+    private final JdbcTemplate jdbc;
+
+    public void reserveIdempotent(String orderId, String paymentId) {
+        jdbc.update("""
+            INSERT INTO stock_reservations (order_id, payment_id, reserved_at)
+            VALUES (?, ?, now())
+            ON CONFLICT (payment_id) DO NOTHING
+            """, orderId, paymentId);
+    }
+}</pre>
+
+            <h3><i class="fas fa-tag"></i> Correlation ID Propagation</h3>
+            <pre>// Producer — attach correlation ID to Kafka message headers
+ProducerRecord&lt;String, String&gt; record = new ProducerRecord&lt;&gt;(topic, key, value);
+record.headers().add("X-Correlation-Id", correlationId.getBytes(StandardCharsets.UTF_8));
+kafkaTemplate.send(record);
+
+// Consumer — read correlation ID and place in MDC for structured logging
+@KafkaListener(topics = "payment.created")
+public void consume(ConsumerRecord&lt;String, String&gt; record) {
+    String correlationId = new String(
+        record.headers().lastHeader("X-Correlation-Id").value(), StandardCharsets.UTF_8);
+    MDC.put("correlationId", correlationId);
+    // process...
+}</pre>
+
+            <h3><i class="fas fa-recycle"></i> DLT Recovery Endpoint</h3>
+            <pre>@RestController
+@RequestMapping("/admin/dlq")
+public class DlqRecoveryController {
+    private final KafkaTemplate&lt;String, String&gt; kafkaTemplate;
+
+    @PostMapping("/replay")
+    public ResponseEntity&lt;String&gt; replay(
+            @RequestParam String dlqTopic,
+            @RequestParam String targetTopic) {
+        // Use KafkaConsumer to read messages from dlqTopic and republish to targetTopic
+        return ResponseEntity.ok("Replay initiated from " + dlqTopic + " to " + targetTopic);
+    }
+}</pre>
+        </section>
+
+        <!-- SLIDE 20: TOPIC 9 - EXECUTION FLOW + ANTI-PATTERNS + DECISION MATRIX -->
+        <section class="slide" data-index="20">
+            <div class="slide-breadcrumb"><span class="mod-tag mod-4">Module 4</span><span class="bc-sep">·</span><span class="bc-slide">Slide 5 of 5</span><span class="bc-sep">·</span><span>Multi-Service Resilience</span></div>
+            <h2><i class="fas fa-stream" style="color:var(--tech-orange)"></i> <span class="mod-tag mod-4">Module 4</span> · Slide 5 &mdash; Execution Flow, Anti-Patterns &amp; Decision Matrix</h2>
+
+            <h3><i class="fas fa-sitemap"></i> Execution Flow &mdash; Retry Escalation to Dead Letter Topic</h3>
+            <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as Consumer
+    participant K as Kafka
+
+    C->>K: poll payment.created
+    C->>C: processing fails — RetryableException
+    C->>K: publish to payment.created-retry-0 (via @RetryableTopic)
+    K-->>C: after backoff — receive from retry-0
+    C->>C: fails again — RetryableException
+    C->>K: publish to payment.created-retry-1
+    K-->>C: after backoff — receive from retry-1
+    C->>C: fails permanently — NonRetryableException
+    C->>K: publish to payment.created-dlt
+    Note over K: DLT retains the message for operational review and replay
+            </div>
+
+            <h3><i class="fas fa-exclamation-triangle"></i> Common Mistakes &mdash; Anti-Patterns</h3>
+            <div class="mistakes-box">
+                <ul>
+                    <li>No exception classification &mdash; all failures are retried; poison-pill messages loop through the retry chain indefinitely.</li>
+                    <li>Business failures thrown as exceptions &mdash; fraud detection or stock exhaustion results end up in the DLT rather than triggering saga compensations.</li>
+                    <li>Missing idempotency keys &mdash; duplicate events from retries execute business logic multiple times with unintended side effects.</li>
+                    <li>No correlation ID propagated &mdash; log entries across services are unconnected; end-to-end debugging is impossible.</li>
+                    <li>DLT with short retention &mdash; messages expire before the team can investigate and replay them.</li>
+                </ul>
+            </div>
+
+            <h3><i class="fas fa-table"></i> Decision Matrix &mdash; Retry Strategies</h3>
+            <table>
+                <tr>
+                    <th>Strategy</th>
+                    <th>When to Use</th>
+                    <th>Advantages</th>
+                    <th>Trade-offs</th>
+                </tr>
+                <tr>
+                    <td><strong>Blocking retry</strong></td>
+                    <td>Avoid in Kafka — blocks the partition</td>
+                    <td>Simple to implement</td>
+                    <td>Stops all consumption; triggers consumer rebalance</td>
+                </tr>
+                <tr>
+                    <td><strong>@RetryableTopic</strong></td>
+                    <td>Transient failures requiring backoff</td>
+                    <td>Non-blocking; per-message retry with configurable delay</td>
+                    <td>Adds retry topic overhead to the cluster</td>
+                </tr>
+                <tr>
+                    <td><strong>Immediate DLT</strong></td>
+                    <td>Permanent failures — bad data, logic errors</td>
+                    <td>Isolates poison pills; unblocks the partition immediately</td>
+                    <td>Requires a manual recovery and replay workflow</td>
+                </tr>
+                <tr>
+                    <td><strong>Publish failure event</strong></td>
+                    <td>Business rule violations</td>
+                    <td>Enables saga compensation; keeps the flow observable and auditable</td>
+                    <td>The failure event consumer must be implemented and tested</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- SLIDE 21: CONCLUSION -->
+        <section class="slide cover" data-index="21">
+            <h2 style="border-bottom:3px solid var(--tech-blue);">Training Complete &mdash; Kafka Advanced Topics &middot; 1 Day / 4 Hours</h2>
+            <div style="margin:1.5rem 0;">
+                <span class="badge">4 MODULES · 22 SLIDES</span>
+                <span class="badge orange">PRODUCTION CODE</span>
+                <span class="badge">APPLIED CONTEXT</span>
+                <span class="badge">JAVA 17 / SPRING BOOT</span>
+            </div>
+            <div class="principles-box" style="max-width:720px;text-align:left;">
+                <h4>This module covered four advanced Kafka topics, applied throughout a practical domain context:</h4>
+                <ol>
+                    <li>Schema Registry — definition, Avro, schema IDs, self-describing messages</li>
+                    <li>Schema Registry — when, where, and how: producer, consumer, CI/CD integration</li>
+                    <li>Schema Registry — architecture, field rename scenario, compatibility flow</li>
+                    <li>Schema Registry — failure modes, root cause, correct approach and key principles</li>
+                    <li>Schema Registry — code: pom.xml, application.yml, Avro schemas v1 and v2, producer, consumer, CI check</li>
+                    <li>Schema Registry — execution flow sequence diagram, anti-patterns, Avro vs JSON Schema vs Protobuf matrix</li>
+                    <li>Kafka Security — encryption, authentication, authorization: what, why, when, how</li>
+                    <li>Kafka Security — architecture diagram, unsecured cluster scenario, goals</li>
+                    <li>Kafka Security — failure modes, root cause, correct approach and key principles</li>
+                    <li>Kafka Security — code: broker config, client config, ACL CLI, programmatic SSL</li>
+                    <li>Kafka Security — mTLS handshake sequence, anti-patterns, mTLS vs SASL decision matrix</li>
+                    <li>Event-Driven Design — events, commands, pub-sub, choreography, orchestration, sagas</li>
+                    <li>Event-Driven Design — architecture diagram, checkout scenario, goals</li>
+                    <li>Event-Driven Design — failure modes, root cause, correct approach and key principles</li>
+                    <li>Event-Driven Design — code: event record, publisher, independent consumer, compensation handler</li>
+                    <li>Event-Driven Design — saga sequence diagram, anti-patterns, choreography vs orchestration matrix</li>
+                    <li>Multi-Service Resilience — failure taxonomy, retry, DLT, idempotency: what, why, when, how</li>
+                    <li>Multi-Service Resilience — architecture diagram, mixed failure scenario, goals</li>
+                    <li>Multi-Service Resilience — failure modes, root cause, correct approach and key principles</li>
+                    <li>Multi-Service Resilience — code: @RetryableTopic, idempotent repository, correlation ID, DLT recovery endpoint</li>
+                    <li>Multi-Service Resilience — retry escalation sequence, anti-patterns, retry strategy decision matrix</li>
+                </ol>
+            </div>
+            <div class="best-practices-box" style="max-width:720px;text-align:left;margin-top:1rem;">
+                <h4>Next Steps</h4>
+                <ul>
+                    <li>Set up Schema Registry with Avro, evolve a schema, and observe the compatibility enforcement in action</li>
+                    <li>Configure a Kafka cluster with mTLS and topic-level ACLs; verify the plaintext port is disabled</li>
+                    <li>Implement a choreographed saga with compensating transactions and test failure paths</li>
+                    <li>Add <code>@RetryableTopic</code> and a DLT recovery endpoint to an existing service; exercise all three failure categories in an integration test</li>
+                </ul>
+                <h4>References</h4>
+                <ul>
+                    <li><a href="https://docs.confluent.io/platform/current/schema-registry/index.html" target="_blank">Confluent Schema Registry Documentation</a></li>
+                    <li><a href="https://kafka.apache.org/documentation/#security" target="_blank">Kafka Security Guide</a></li>
+                    <li><a href="https://microservices.io/patterns/data/saga.html" target="_blank">Saga Pattern &mdash; Chris Richardson</a></li>
+                    <li><a href="https://docs.spring.io/spring-kafka/reference/html/" target="_blank">Spring Kafka Reference Documentation</a></li>
+                </ul>
+            </div>
+            <div class="footer-note" style="margin-top:2rem;max-width:700px;">
+                <i class="fas fa-graduation-cap" style="color:var(--tech-gold);"></i>
+                <strong>Techademy</strong> &middot; Exponential Engineer (E2) Program<br>
+                Real Patterns &middot; Production Scenarios &middot; Applied Domain Context
+            </div>
+            <p style="margin-top:2rem;color:var(--tech-gray-600);">Use arrow keys or navigation buttons to revisit any slide.</p>
+        </section>
+
+    </div><!-- end slides-container -->
+
+    <script>
+        (function() {
+            const container = document.getElementById('slidesContainer');
+            const slides = document.querySelectorAll('.slide');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const homeBtn = document.getElementById('homeBtn');
+            const counter = document.getElementById('slide-counter');
+            let currentIndex = 0;
+            const totalSlides = slides.length;
+
+            function updateCounter() {
+                counter.textContent = (currentIndex + 1) + ' / ' + totalSlides;
+            }
+
+            function scrollToSlide(index) {
+                if (index < 0) index = 0;
+                if (index >= totalSlides) index = totalSlides - 1;
+                const slide = slides[index];
+                if (slide) {
+                    slide.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'start' });
+                    currentIndex = index;
+                    updateCounter();
+                }
+            }
+
+            function onScroll() {
+                const newIndex = Math.round(container.scrollLeft / container.clientWidth);
+                if (newIndex !== currentIndex) {
+                    currentIndex = newIndex;
+                    updateCounter();
+                }
+            }
+
+            prevBtn.addEventListener('click', () => scrollToSlide(currentIndex - 1));
+            nextBtn.addEventListener('click', () => scrollToSlide(currentIndex + 1));
+            homeBtn.addEventListener('click', () => scrollToSlide(0));
+            container.addEventListener('scroll', onScroll, { passive: true });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight') { e.preventDefault(); scrollToSlide(currentIndex + 1); }
+                if (e.key === 'ArrowLeft')  { e.preventDefault(); scrollToSlide(currentIndex - 1); }
+                if (e.key === 'ArrowDown')  { e.preventDefault(); slides[currentIndex].scrollBy({ top: 120, behavior: 'smooth' }); }
+                if (e.key === 'ArrowUp')    { e.preventDefault(); slides[currentIndex].scrollBy({ top: -120, behavior: 'smooth' }); }
+                if (e.key === 'Home') scrollToSlide(0);
+                if (e.key === 'End')  scrollToSlide(totalSlides - 1);
+            });
+
+            updateCounter();
+        })();
+    </script>
+</body>
+</html>
