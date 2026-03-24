@@ -1,5 +1,4 @@
 # Java Full-Stack Engineering: Production-Grade Data & Persistence Study Guide
-
 ---
 
 ## Table of Contents
